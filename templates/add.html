@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Add New Transaction</h2>
+<form action="{{ url_for('add_transaction') }}" method="POST" class="mb-5">
+  <div class="mb-3">
+    <label for="date" class="form-label">Date</label>
+    <input type="date" id="date" name="date" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label for="asset" class="form-label">Asset (Ticker Symbol)</label>
+    <input type="text" id="asset" name="asset" class="form-control" placeholder="e.g. AAPL or CDR.WA" required>
+    <div class="form-text">
+      Use the ticker symbol (include exchange suffix if applicable, e.g. ".WA" for Warsaw stocks).
+    </div>
+  </div>
+  <div class="mb-3">
+    <label for="type" class="form-label">Type</label>
+    <select id="type" name="type" class="form-select" required>
+      <option value="buy" selected>Buy</option>
+      <option value="sell">Sell</option>
+    </select>
+  </div>
+  <div class="mb-3">
+    <label for="quantity" class="form-label">Quantity</label>
+    <input type="number" id="quantity" name="quantity" step="any" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label for="price" class="form-label">Price per Unit</label>
+    <input type="number" id="price" name="price" step="any" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label for="currency" class="form-label">Currency</label>
+    <input type="text" id="currency" name="currency" class="form-control" placeholder="e.g. PLN or USD" required>
+  </div>
+  <div class="mb-3">
+    <label for="category" class="form-label">Category</label>
+    <input type="text" id="category" name="category" class="form-control" placeholder="e.g. Stock, Bond, etc." required>
+  </div>
+  <button type="submit" class="btn btn-primary">Add Transaction</button>
+</form>
+{% endblock %}
