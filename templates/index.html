@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Dashboard</h2>
+
+<!-- Total portfolio value -->
+<div class="mb-3">
+  <h5>Total Portfolio Value: {{ "%.2f"|format(total_value_pln) }} PLN</h5>
+</div>
+
+<!-- Charts: Pie and Line chart side by side on desktop, stacked on mobile -->
+<div class="row">
+  <div class="col-md-6 mb-4">
+    <h5 class="text-center">Asset Allocation</h5>
+    <div style="height: 300px;">
+      <canvas id="pieChart"></canvas>
+    </div>
+  </div>
+  <div class="col-md-6 mb-4">
+    <h5 class="text-center">Portfolio Value Over Time</h5>
+    <div style="height: 300px;">
+      <canvas id="lineChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Holdings summary table -->
+<div class="mt-4">
+  <h5>Holdings Summary</h5>
+  <table class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <th>Asset</th>
+        <th>Category</th>
+        <th>Quantity</th>
+        <th>Price (orig)</th>
+        <th>Value (orig)</th>
+        <th>Value (PLN)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for h in holdings %}
+      <tr>
+        <td>{{ h.asset }}</td>
+        <td>{{ h.category }}</td>
+        <td>{{ "%.2f"|format(h.quantity) }}</td>
+        <td>{{ "%.2f"|format(h.price) }} {{ h.currency }}</td>
+        <td>{{ "%.2f"|format(h.value_orig) }} {{ h.currency }}</td>
+        <td>{{ "%.2f"|format(h.value_pln) }} PLN</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Chart.js scripts: using data passed from Flask context -->
+<script>
+  // Data passed from Flask to JavaScript (via Jinja tojson filter)
+  const pieLabels = {{ pie_labels|tojson }};
+  const pieData   = {{ pie_values|tojson }};
+  const lineLabels = {{ line_labels|tojson }};
+  const lineData   = {{ line_values|tojson }};
+  // Render Pie Chart (asset allocation)
+  new Chart(document.getElementById('pieChart'), {
+    type: 'pie',
+    data: {
+      labels: pieLabels,
+      datasets: [{
+        data: pieData,
+        backgroundColor: [
+          '#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f',
+          '#edc949','#af7aa1','#ff9da7','#9c755f','#bab0ab'
+        ],
+      }]
+    },
+    options: {
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+  // Render Line Chart (portfolio value over time)
+  new Chart(document.getElementById('lineChart'), {
+    type: 'line',
+    data: {
+      labels: lineLabels,
+      datasets: [{
+        label: 'Total Value (PLN)',
+        data: lineData,
+        fill: false,
+        borderColor: 'rgb(75, 192, 192)',
+        tension: 0.1
+      }]
+    },
+    options: {
+      scales: {
+        y: { beginAtZero: false }
+      }
+    }
+  });
+</script>
+{% endblock %}

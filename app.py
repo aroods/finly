@@ -30,6 +30,9 @@ CREATE TABLE IF NOT EXISTS snapshots (
 """)
 conn.commit()
 
+import os
+print(os.getcwd())
+
 def fetch_current_prices():
     """Fetch current prices for all assets and compute total portfolio value in PLN."""
     # Aggregate current holdings by asset (sum of quantities, buys minus sells)
@@ -110,9 +113,9 @@ def take_snapshot():
 scheduler = BackgroundScheduler(daemon=True)
 scheduler.add_job(take_snapshot, 'cron', day=1, hour=0, minute=0)
 
-@app.before_first_request
-def start_scheduler():
-    scheduler.start()  # Start scheduler when the first request is handled:contentReference[oaicite:0]{index=0}
+# @app.before_serving
+# async def start_scheduler():
+#     scheduler.start()  # Start scheduler when the first request is handled:contentReference[oaicite:0]{index=0}
 
 @app.teardown_appcontext
 def shutdown_scheduler(exception=None):
@@ -168,5 +171,6 @@ def add_transaction():
         return render_template('add.html')
 
 if __name__ == '__main__':
+    scheduler.start()
     # Run the Flask development server (listen on 0.0.0.0 so it's accessible externally)
     app.run(host='0.0.0.0', port=5000)
