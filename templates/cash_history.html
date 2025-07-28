@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Cash History</h2>
+<a href="{{ url_for('cash.add_cash') }}" class="btn btn-primary mb-3">Add Cash Entry</a>
+<table class="table table-bordered table-striped">
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Amount</th>
+      <th>Change (Δ)</th>
+      <th>Note</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for deposit in deposits %}
+    <tr>
+      <td>{{ deposit[1]|euro_datetime }}</td>
+      <td>{{ "%.2f"|format(deposit[2]) }}</td>
+      <td>
+        {% if deposit[3]|float >= 0 %}
+          <span class="text-success">+{{ "%.2f"|format(deposit[3]|float) }}</span>
+        {% else %}
+          <span class="text-danger">{{ "%.2f"|format(deposit[3]|float) }}</span>
+        {% endif %}
+      </td>
+      <td>{{ deposit[4] }}</td>
+      <td>
+        <a href="{{ url_for('cash.edit_cash', deposit_id=deposit[0]) }}" class="btn btn-sm btn-secondary">Edit</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<div class="mt-3">
+  <b>Current Cash Balance: {{ "%.2f"|format(current_balance) }}</b>
+</div>
+{% endblock %}

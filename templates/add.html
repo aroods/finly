@@ -1,22 +1,21 @@
 {% extends "base.html" %}
 {% block content %}
-<h2 class="mb-4">Add New Transaction</h2>
-<form action="{{ url_for('add_transaction') }}" method="POST" class="mb-5">
+<h2>Add Transaction</h2>
+<form method="POST">
   <div class="mb-3">
     <label for="date" class="form-label">Date</label>
-    <input type="date" id="date" name="date" class="form-control" required>
+    <input type="date" id="date" name="date" class="form-control" value="{{ today }}" required>
   </div>
-  <div class="mb-3">
+  <div class="mb-3 position-relative">
     <label for="asset" class="form-label">Asset (Ticker Symbol)</label>
-    <input type="text" id="asset" name="asset" class="form-control" placeholder="e.g. AAPL or CDR.WA" required>
-    <div class="form-text">
-      Use the ticker symbol (include exchange suffix if applicable, e.g. ".WA" for Warsaw stocks).
-    </div>
+    <input type="text" id="asset" name="asset" class="form-control" autocomplete="off" required>
+    <div id="suggestions" class="list-group position-absolute" style="z-index: 1000; width: 100%;"></div>
+    <div class="form-text">Start typing ticker or company name, then select.</div>
   </div>
   <div class="mb-3">
     <label for="type" class="form-label">Type</label>
     <select id="type" name="type" class="form-select" required>
-      <option value="buy" selected>Buy</option>
+      <option value="buy">Buy</option>
       <option value="sell">Sell</option>
     </select>
   </div>
@@ -30,12 +29,79 @@
   </div>
   <div class="mb-3">
     <label for="currency" class="form-label">Currency</label>
-    <input type="text" id="currency" name="currency" class="form-control" placeholder="e.g. PLN or USD" required>
+    <input type="text" id="currency" name="currency" class="form-control" required readonly>
   </div>
   <div class="mb-3">
     <label for="category" class="form-label">Category</label>
-    <input type="text" id="category" name="category" class="form-control" placeholder="e.g. Stock, Bond, etc." required>
+    <select id="category" name="category" class="form-select" required>
+      <option value="Stock">Stock</option>
+      <option value="ETF">ETF</option>
+      <option value="Bond">Bond</option>
+      <option value="Crypto">Crypto</option>
+    </select>
   </div>
   <button type="submit" class="btn btn-primary">Add Transaction</button>
 </form>
+
+<script>
+let debounceTimeout;
+const assetInput = document.getElementById('asset');
+const suggestions = document.getElementById('suggestions');
+const currencyInput = document.getElementById('currency');
+
+// assetInput.addEventListener('input', function() {
+//     clearTimeout(debounceTimeout);
+//     const q = assetInput.value;
+//     if (q.length < 2) {
+//         suggestions.innerHTML = '';
+//         return;
+//     }
+//     debounceTimeout = setTimeout(() => {
+//         fetch(`/api/yahoo-search?q=${encodeURIComponent(q)}`)
+//             .then(response => response.json())
+//             .then(data => {
+//                 suggestions.innerHTML = '';
+//                 data.forEach(item => {
+//                     const div = document.createElement('div');
+//                     div.className = 'list-group-item list-group-item-action';
+//                     div.textContent = `${item.ticker} — ${item.name}${item.exchange ? ' ('+item.exchange+')' : ''}`;
+//                     div.onclick = function() {
+//                         assetInput.value = item.ticker;
+//                         suggestions.innerHTML = '';
+//                     }
+//                     suggestions.appendChild(div);
+//                 });
+//             });
+//     }, 400);
+// });
+// document.addEventListener('click', function(e) {
+//     if (e.target !== assetInput) {
+//         suggestions.innerHTML = '';
+//     }
+// });
+
+
+
+function fetchCurrency(ticker) {
+    if (!ticker || ticker.length < 1) return; // optionally, require min length
+    fetch(`/api/get-currency?symbol=${encodeURIComponent(ticker)}`)
+        .then(resp => resp.json())
+        .then(data => {
+            if(data.currency){
+                currencyInput.value = data.currency;
+            }
+        });
+}
+// Only fetch when user leaves the ticker field
+assetInput.addEventListener('blur', function() {
+    fetchCurrency(this.value.trim());
+});
+
+// // Optional: if you also want to trigger on "Enter" key, add:
+// assetInput.addEventListener('keydown', function(e) {
+//     if (e.key === "Enter") {
+//         this.blur(); // this will trigger the blur event
+//     }
+// });
+</script>
 {% endblock %}

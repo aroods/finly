@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Add Cash State</h2>
+<form method="POST">
+  <div class="mb-3">
+    <label for="amount" class="form-label">Total Cash (PLN)</label>
+    <input type="number" id="amount" name="amount" class="form-control" step="any" required>
+  </div>
+  <div class="mb-3">
+    <label for="note" class="form-label">Note (optional)</label>
+    <input type="text" id="note" name="note" class="form-control">
+  </div>
+  <button type="submit" class="btn btn-success">Save Cash State</button>
+  <a href="{{ url_for('cash.cash_history') }}" class="btn btn-secondary ms-2">Cancel</a>
+</form>
+{% endblock %}

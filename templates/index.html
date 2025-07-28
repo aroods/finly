@@ -1,99 +1,66 @@
 {% extends "base.html" %}
 {% block content %}
-<h2 class="mb-4">Dashboard</h2>
+<h2>Dashboard</h2>
+<a href="{{ url_for('dashboard.refresh_prices') }}" class="btn btn-info mb-3">Refresh Prices</a>
 
-<!-- Total portfolio value -->
-<div class="mb-3">
-  <h5>Total Portfolio Value: {{ "%.2f"|format(total_value_pln) }} PLN</h5>
+<!-- Asset Allocation Pie Chart -->
+<div class="text-center" style="max-width: 400px; margin: auto;">
+  <canvas id="pieChart" style="max-width: 100%; height: 220px;"></canvas>
 </div>
 
-<!-- Charts: Pie and Line chart side by side on desktop, stacked on mobile -->
-<div class="row">
-  <div class="col-md-6 mb-4">
-    <h5 class="text-center">Asset Allocation</h5>
-    <div style="height: 300px;">
-      <canvas id="pieChart"></canvas>
-    </div>
-  </div>
-  <div class="col-md-6 mb-4">
-    <h5 class="text-center">Portfolio Value Over Time</h5>
-    <div style="height: 300px;">
-      <canvas id="lineChart"></canvas>
-    </div>
-  </div>
-</div>
+<!-- Portfolio Summary Table -->
+<table class="table table-bordered table-striped">
+  <thead>
+    <tr>
+      <th>Asset</th>
+      <th>Category</th>
+      <th>Quantity</th>
+      <th>Weighted Avg Price</th>
+      <th>Investment Cost</th>
+      <th>Current Price</th>
+      <th>Value (Current)</th>
+      <th>Profit/Loss (PLN)</th>
+      <th>Profit/Loss (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in dashboard_rows %}
+    <tr>
+      <td>{{ row.asset }}</td>
+      <td>{{ row.category }}</td>
+      <td>{{ "%.2f"|format(row.quantity) }}</td>
+      <td>{{ "%.2f"|format(row.weighted_avg_price) }}</td>
+      <td>{{ "%.2f"|format(row.investment_cost) }}</td>
+      <td>{{ "%.2f"|format(row.current_price) }}</td>
+      <td>{{ "%.2f"|format(row.current_value) }}</td>
+      <td>{{ "%.2f"|format(row.profit_loss_pln) }}</td>
+      <td>{{ "%.2f"|format(row.profit_loss_perc) }}%</td>
+    </tr>
+    {% endfor %}
+    <tr>
+      <td>Cash</td>
+      <td>Deposit</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+      <td>{{ "%.2f"|format(current_cash) }}</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+  </tbody>
+</table>
 
-<!-- Holdings summary table -->
-<div class="mt-4">
-  <h5>Holdings Summary</h5>
-  <table class="table table-bordered table-striped">
-    <thead>
-      <tr>
-        <th>Asset</th>
-        <th>Category</th>
-        <th>Quantity</th>
-        <th>Price (orig)</th>
-        <th>Value (orig)</th>
-        <th>Value (PLN)</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for h in holdings %}
-      <tr>
-        <td>{{ h.asset }}</td>
-        <td>{{ h.category }}</td>
-        <td>{{ "%.2f"|format(h.quantity) }}</td>
-        <td>{{ "%.2f"|format(h.price) }} {{ h.currency }}</td>
-        <td>{{ "%.2f"|format(h.value_orig) }} {{ h.currency }}</td>
-        <td>{{ "%.2f"|format(h.value_pln) }} PLN</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-
-<!-- Chart.js scripts: using data passed from Flask context -->
+<!-- Pie chart JS -->
 <script>
-  // Data passed from Flask to JavaScript (via Jinja tojson filter)
-  const pieLabels = {{ pie_labels|tojson }};
-  const pieData   = {{ pie_values|tojson }};
-  const lineLabels = {{ line_labels|tojson }};
-  const lineData   = {{ line_values|tojson }};
-  // Render Pie Chart (asset allocation)
-  new Chart(document.getElementById('pieChart'), {
+const pieLabels = {{ pie_labels|tojson }};
+const pieData   = {{ pie_values|tojson }};
+new Chart(document.getElementById('pieChart'), {
     type: 'pie',
     data: {
       labels: pieLabels,
-      datasets: [{
-        data: pieData,
-        backgroundColor: [
-          '#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f',
-          '#edc949','#af7aa1','#ff9da7','#9c755f','#bab0ab'
-        ],
-      }]
-    },
-    options: {
-      plugins: { legend: { position: 'bottom' } }
+      datasets: [{ data: pieData }]
     }
-  });
-  // Render Line Chart (portfolio value over time)
-  new Chart(document.getElementById('lineChart'), {
-    type: 'line',
-    data: {
-      labels: lineLabels,
-      datasets: [{
-        label: 'Total Value (PLN)',
-        data: lineData,
-        fill: false,
-        borderColor: 'rgb(75, 192, 192)',
-        tension: 0.1
-      }]
-    },
-    options: {
-      scales: {
-        y: { beginAtZero: false }
-      }
-    }
-  });
+});
 </script>
 {% endblock %}

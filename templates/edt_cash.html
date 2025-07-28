@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Edit Cash Entry</h2>
+<form method="POST">
+  <div class="mb-3">
+    <label for="date" class="form-label">Date</label>
+    <input type="date" id="date" name="date" class="form-control" value="{{ deposit[1] }}" required>
+  </div>
+  <div class="mb-3">
+    <label for="amount" class="form-label">Amount</label>
+    <input type="number" id="amount" name="amount" step="any" class="form-control" value="{{ deposit[2] }}" required>
+  </div>
+  <div class="mb-3">
+    <label for="note" class="form-label">Note</label>
+    <input type="text" id="note" name="note" class="form-control" value="{{ deposit[3] }}">
+  </div>
+  <button type="submit" class="btn btn-primary">Update Cash Entry</button>
+</form>
+{% endblock %}

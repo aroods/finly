@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="text-center mb-4">
+    <img src="{{ url_for('static', filename='logo_name.png') }}" alt="Finly Logo" style="height: 220px;">
+  </div>
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow mb-4">
+      <div class="card-body">
+        <h2 class="mb-3">About Finly Portfolio Tracker</h2>
+        <p>
+          <b>Finly</b> is a lightweight, self-hosted portfolio tracker for individual investors and finance enthusiasts. 
+          It’s designed to run on your Raspberry Pi or home server, helping you keep full control over your data.
+        </p>
+        <ul>
+          <li>Track all your stocks, ETFs, bonds, crypto, and cash balances in one place.</li>
+          <li>Automatic updates of prices and currency rates.</li>
+          <li>Clear portfolio summaries, interactive charts, and P/L breakdowns.</li>
+          <li>Keep a full, editable transaction and cash history.</li>
+          <li>See upcoming events like dividends and earnings for your holdings.</li>
+          <li>All your data is <b>private</b> and stays on your device.</li>
+        </ul>
+        <p>
+          Built for easy use and extensibility—whether you’re tracking a few assets or your entire investment life!
+        </p>
+        <p class="text-muted small mb-0">
+          &copy; {{ 2025 }} Finly. This is open-source software—improve and share!
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
