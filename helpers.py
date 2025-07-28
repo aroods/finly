@@ -11,21 +11,6 @@ def euro_datetime(value):
         return dt.strftime("%d.%m.%Y %H:%M:%S")
     return ''
 
-def get_currency():
-    symbol = request.args.get('symbol')
-    if not symbol:
-        return jsonify({"error": "No symbol provided"}), 400
-    try:
-        ticker = yf.Ticker(symbol)
-        info = ticker.fast_info if hasattr(ticker, 'fast_info') else ticker.info
-        currency = info.get('currency', '')
-        # Special handling for GBX (see previous solutions)
-        if currency == "GBX":
-            currency = "GBP"
-        return jsonify({"currency": currency})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
 def get_current_prices(symbols):
     prices = {}
     currencies = {}
