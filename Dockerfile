@@ -1,18 +1,20 @@
-# Use an official Python 3 slim image (multi-arch, works on ARM)
 FROM python:3.11-slim
 
-# Set working directory in container
 WORKDIR /app
 
-# Install required Python packages (Flask, yfinance, APScheduler)
-RUN pip install --no-cache-dir flask yfinance apscheduler
+# Copy requirements and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code into the container
+# Copy application code (edit paths if your root folder is named differently)
 COPY app.py .
-COPY templates ./templates
+COPY db.py .
+COPY helpers.py .
+COPY routes/ ./routes/
+COPY templates/ ./templates/
+COPY static/ ./static/
 
-# Expose port 5000 for Flask
+# Expose Flask port
 EXPOSE 5000
 
-# Start the Flask app
 CMD ["python", "app.py"]
