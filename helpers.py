@@ -125,24 +125,3 @@ def calculate_profit_loss(current_value, investment_cost):
     pln = current_value - investment_cost
     perc = (pln / investment_cost) * 100
     return pln, perc
-
-def get_cached_value(key, max_age_minutes):
-    db = get_db()
-    cur = db.execute("SELECT value, timestamp FROM cache WHERE key = ?", (key,))
-    row = cur.fetchone()
-    if row:
-        ts = datetime.fromisoformat(row["timestamp"])
-        if datetime.now() - ts < timedelta(minutes=max_age_minutes):
-            try:
-                return json.loads(row["value"])
-            except:
-                return row["value"]
-    return None
-
-def set_cached_value(key, value):
-    db = get_db()
-    db.execute(
-        "INSERT OR REPLACE INTO cache (key, value, timestamp) VALUES (?, ?, ?)",
-        (key, json.dumps(value), datetime.now().isoformat())
-    )
-    db.commit()

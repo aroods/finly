@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 from db import get_db
 from helpers import calculate_weighted_avg, calculate_investment_cost, calculate_profit_loss, get_current_prices
 from cache_store import CACHE

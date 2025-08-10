@@ -4,8 +4,6 @@
 
 <!-- Refresh & Cache Controls -->
 <div class="d-flex flex-wrap gap-2 mb-3">
-  <a href="{{ url_for('dashboard.refresh_prices') }}" class="btn btn-info">Refresh Prices</a>
-
   <form method="POST" action="{{ url_for('dashboard.clear_cache') }}">
     <input type="hidden" name="prefix" value="price:">
     <button class="btn btn-outline-primary" type="submit">Clear Price Cache</button>
@@ -78,6 +76,7 @@
 </table>
 
 <!-- Pie chart JS -->
+ 
 <script>
 const pieLabels = {{ pie_labels|tojson }};
 const pieData   = {{ pie_values|tojson }};
