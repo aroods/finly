@@ -1,7 +1,33 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>Dashboard</h2>
-<a href="{{ url_for('dashboard.refresh_prices') }}" class="btn btn-info mb-3">Refresh Prices</a>
+
+<!-- Refresh & Cache Controls -->
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <a href="{{ url_for('dashboard.refresh_prices') }}" class="btn btn-info">Refresh Prices</a>
+
+  <form method="POST" action="{{ url_for('dashboard.clear_cache') }}">
+    <input type="hidden" name="prefix" value="price:">
+    <button class="btn btn-outline-primary" type="submit">Clear Price Cache</button>
+  </form>
+
+  <form method="POST" action="{{ url_for('dashboard.clear_cache') }}">
+    <input type="hidden" name="prefix" value="events:">
+    <button class="btn btn-outline-secondary" type="submit">Clear Events Cache</button>
+  </form>
+
+  <form method="POST" action="{{ url_for('dashboard.clear_cache') }}">
+    <button class="btn btn-outline-danger" type="submit">Clear ALL Cache</button>
+  </form>
+</div>
+
+{% if cache_stats %}
+  <div class="text-muted small mb-3">
+    Cache entries: {{ cache_stats.total_items }} |
+    Oldest age: {{ cache_stats.oldest if cache_stats.oldest is not none else 'n/a' }} |
+    Newest age: {{ cache_stats.newest if cache_stats.newest is not none else 'n/a' }}
+  </div>
+{% endif %}
 
 <!-- Asset Allocation Pie Chart -->
 <div class="text-center" style="max-width: 400px; margin: auto;">

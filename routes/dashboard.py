@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash
 from db import get_db
 from helpers import calculate_weighted_avg, calculate_investment_cost, calculate_profit_loss, get_current_prices
+from cache_store import CACHE
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
@@ -71,17 +72,29 @@ def dashboard():
     pie_labels = [row["asset"] for row in dashboard_rows] + ["Cash"]
     pie_values = [row["current_value"] for row in dashboard_rows] + [current_cash]
 
-    print(pie_labels, pie_values)
+    stats = CACHE.stats()
     return render_template('index.html',
         dashboard_rows=dashboard_rows,
         current_cash=current_cash,
         total_value_pln=total_value_pln,
         pie_labels=pie_labels,
-        pie_values=pie_values
+        pie_values=pie_values,
+        cache_stats=stats
     )
 
 @dashboard_bp.route('/refresh')
 def refresh_prices():
     # You may want to force-update cache, or just redirect (dashboard will always fetch fresh on load)
     flash("Prices refreshed!", "success")
+    return redirect(url_for('dashboard.dashboard'))
+
+
+@dashboard_bp.route('/clear-cache', methods=['POST'])
+def clear_cache():
+    prefix = request.form.get('prefix')
+    if prefix:
+        CACHE.clear_prefix(prefix)
+    else:
+        CACHE.clear_all()
+    flash('Cache cleared!', 'success')
     return redirect(url_for('dashboard.dashboard'))

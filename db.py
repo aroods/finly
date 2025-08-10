@@ -29,7 +29,8 @@ def init_db():
         category TEXT NOT NULL
     )
     ''')
-
+    # cur.execute('''
+    # DROP TABLE api_cache;  ''')
 
     # cur.execute('''
     # ALTER TABLE cash_deposits RENAME COLUMN date TO created_at;  ''')
