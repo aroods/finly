@@ -57,7 +57,7 @@ def cash_history():
     cur = db.cursor()
     cur.execute("SELECT * FROM cash_deposits ORDER BY created_at DESC")
     deposits = cur.fetchall()
-    cur.execute("SELECT SUM(amount) FROM cash_deposits")
+    cur.execute("SELECT amount FROM cash_deposits ORDER BY created_at DESC LIMIT 1")
     current_balance = cur.fetchone()[0] or 0.0
     return render_template(
         'cash_history.html',

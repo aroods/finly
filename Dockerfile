@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app.py .
 COPY db.py .
 COPY helpers.py .
+COPY cache_store.py .
 COPY routes/ ./routes/
 COPY templates/ ./templates/
 COPY static/ ./static/
