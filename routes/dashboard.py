@@ -65,14 +65,18 @@ def dashboard():
 
     # 5. Get current cash
     cur.execute("SELECT amount FROM cash_deposits ORDER BY created_at DESC LIMIT 1")
-    current_cash = cur.fetchone()[0] or 0.0
+    cash_row = cur.fetchone()
+    current_cash = cash_row[0] if cash_row else 0.0
     total_value_pln += current_cash
 
     # 6. Asset allocation for pie chart (includes cash)
     pie_labels = [row["asset"] for row in dashboard_rows] + ["Cash"]
     pie_values = [row["current_value"] for row in dashboard_rows] + [current_cash]
 
-    stats = CACHE.stats()
+    try:
+        stats = CACHE.stats()
+    except Exception:
+        stats = None
     return render_template('index.html',
         dashboard_rows=dashboard_rows,
         current_cash=current_cash,

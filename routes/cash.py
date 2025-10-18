@@ -38,12 +38,37 @@ def edit_cash(deposit_id):
         return redirect(url_for('cash.cash_history'))
 
     if request.method == 'POST':
-        date = request.form['date']
+        form_date = request.form['date']
         amount = float(request.form['amount'])
         note = request.form.get('note', '')
+        original_created_at = deposit[1]
+        if original_created_at and len(original_created_at) > 10:
+            created_at = f"{form_date}{original_created_at[10:]}"
+        else:
+            created_at = form_date
+
         cur.execute(
-            "UPDATE cash_deposits SET date=?, amount=?, note=? WHERE id=?",
-            (date, amount, note, deposit_id)
+            """
+            SELECT amount FROM cash_deposits
+            WHERE id != ? AND created_at <= ?
+            ORDER BY created_at DESC, id DESC
+            LIMIT 1
+            """,
+            (deposit_id, created_at)
+        )
+        prev_row = cur.fetchone()
+        if not prev_row:
+            cur.execute(
+                "SELECT amount FROM cash_deposits WHERE id != ? ORDER BY created_at DESC, id DESC LIMIT 1",
+                (deposit_id,)
+            )
+            prev_row = cur.fetchone()
+        prev_amount = prev_row[0] if prev_row else 0.0
+        delta = amount - prev_amount
+
+        cur.execute(
+            "UPDATE cash_deposits SET created_at=?, amount=?, delta=?, note=? WHERE id=?",
+            (created_at, amount, delta, note, deposit_id)
         )
         db.commit()
         flash("Cash entry updated!", "success")
@@ -58,7 +83,8 @@ def cash_history():
     cur.execute("SELECT * FROM cash_deposits ORDER BY created_at DESC")
     deposits = cur.fetchall()
     cur.execute("SELECT amount FROM cash_deposits ORDER BY created_at DESC LIMIT 1")
-    current_balance = cur.fetchone()[0] or 0.0
+    current_row = cur.fetchone()
+    current_balance = current_row[0] if current_row else 0.0
     return render_template(
         'cash_history.html',
         deposits=deposits,

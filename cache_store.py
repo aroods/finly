@@ -56,13 +56,13 @@ class CacheStore:
         c = conn.cursor()
         c.execute("SELECT COUNT(*), MIN(timestamp), MAX(timestamp) FROM api_cache")
         total, oldest, newest = c.fetchone()
-        print(c)
         conn.close()
-        return {
+        stats = {
             "total_items": total or 0,
-            "oldest": datetime.fromtimestamp(oldest).strftime("%Y-%m-%d %H:%M:%S"),
-            "newest": datetime.fromtimestamp(newest).strftime("%Y-%m-%d %H:%M:%S"),
+            "oldest": datetime.fromtimestamp(oldest).strftime("%Y-%m-%d %H:%M:%S") if oldest else None,
+            "newest": datetime.fromtimestamp(newest).strftime("%Y-%m-%d %H:%M:%S") if newest else None,
         }
+        return stats
 
     def clear_all(self):
         conn = sqlite3.connect(self.db_path)
