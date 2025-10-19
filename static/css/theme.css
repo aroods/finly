@@ -9,7 +9,7 @@
     --accent-strong: #0ea5e9;
     --accent-soft: rgba(56, 189, 248, 0.1);
     --text-primary: #f8fafc;
-    --text-muted: #94a3b8;
+    --text-muted: rgba(203, 213, 225, 0.8);
     --success: #4ade80;
     --danger: #f87171;
     --warning: #facc15;
@@ -32,7 +32,7 @@ body {
 }
 
 .navbar .nav-link {
-    color: var(--text-muted) !important;
+    color: rgba(226, 232, 240, 0.8) !important;
     transition: color 0.2s ease, transform 0.2s ease;
 }
 
@@ -69,7 +69,7 @@ body {
 }
 
 .btn-outline-secondary:hover {
-    border-color: var(--text-muted);
+    border-color: rgba(226, 232, 240, 0.5);
     background-color: rgba(148, 163, 184, 0.15);
 }
 
