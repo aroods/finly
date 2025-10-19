@@ -1,17 +1,24 @@
 import sqlite3
+from pathlib import Path
+
 from flask import g
 
-DB_PATH = "portfolio.db"
+DB_PATH = Path(__file__).resolve().parent / "portfolio.db"
+
 
 def get_db():
     if "db" not in g:
-        g.db = sqlite3.connect(DB_PATH, check_same_thread=False)
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        g.db = conn
     return g.db
+
 
 def close_db(e=None):
     db = g.pop("db", None)
     if db is not None:
         db.close()
+
 
 def init_db():
     db = sqlite3.connect(DB_PATH)
@@ -29,11 +36,6 @@ def init_db():
         category TEXT NOT NULL
     )
     ''')
-    # cur.execute('''
-    # DROP TABLE api_cache;  ''')
-
-    # cur.execute('''
-    # ALTER TABLE cash_deposits RENAME COLUMN date TO created_at;  ''')
 
     # Cash deposits table
     cur.execute('''

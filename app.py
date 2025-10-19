@@ -1,5 +1,10 @@
+import os
+import secrets
+from datetime import datetime
+
 from flask import Flask, redirect, url_for
-from helpers import euro_datetime  # If you have custom filters
+
+from helpers import euro_datetime
 from routes.dashboard import dashboard_bp
 from routes.transactions import transactions_bp
 from routes.cash import cash_bp
@@ -8,10 +13,23 @@ from routes.about import about_bp
 from db import close_db
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_secret_key'  # Replace with your secret
+
+_secret = os.environ.get('SECRET_KEY')
+if not _secret:
+    _secret = secrets.token_urlsafe(32)
+    app.logger.warning(
+        "SECRET_KEY environment variable not set; using a temporary key for this run."
+    )
+app.config['SECRET_KEY'] = _secret
 
 # Register Jinja custom filters
 app.jinja_env.filters['euro_datetime'] = euro_datetime
+
+
+@app.context_processor
+def inject_globals():
+    return {"current_year": datetime.now().year}
+
 
 # Register blueprints
 app.register_blueprint(dashboard_bp, url_prefix='/')
@@ -23,10 +41,12 @@ app.register_blueprint(about_bp, url_prefix='/about')
 # Close DB connections after each request
 app.teardown_appcontext(close_db)
 
+
 # Home (redirect to dashboard)
 @app.route('/')
 def home():
     return redirect(url_for('dashboard.dashboard'))
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
