@@ -1,19 +1,28 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Edit Cash Entry</h2>
-<form method="POST">
-  <div class="mb-3">
-    <label for="date" class="form-label">Date</label>
-    <input type="date" id="date" name="date" class="form-control" value="{{ deposit.created_at[:10] if deposit.created_at else '' }}" required>
+<div class="col-lg-6 col-xl-5 mx-auto">
+  <div class="card">
+    <div class="card-body">
+      <h2 class="h4 fw-semibold mb-4">Edit Cash Entry</h2>
+      <form method="POST" class="row g-3">
+        <div class="col-12">
+          <label for="date" class="form-label">Date</label>
+          <input type="date" id="date" name="date" class="form-control" value="{{ deposit.created_at[:10] if deposit.created_at else '' }}" required>
+        </div>
+        <div class="col-12">
+          <label for="amount" class="form-label">Amount</label>
+          <input type="number" id="amount" name="amount" step="any" class="form-control" value="{{ deposit.amount }}" required>
+        </div>
+        <div class="col-12">
+          <label for="note" class="form-label">Note</label>
+          <input type="text" id="note" name="note" class="form-control" value="{{ deposit.note or '' }}">
+        </div>
+        <div class="col-12 d-flex justify-content-end gap-2 pt-3">
+          <a href="{{ url_for('cash.cash_history') }}" class="btn btn-outline-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary">Update Cash Entry</button>
+        </div>
+      </form>
+    </div>
   </div>
-  <div class="mb-3">
-    <label for="amount" class="form-label">Amount</label>
-    <input type="number" id="amount" name="amount" step="any" class="form-control" value="{{ deposit.amount }}" required>
-  </div>
-  <div class="mb-3">
-    <label for="note" class="form-label">Note</label>
-    <input type="text" id="note" name="note" class="form-control" value="{{ deposit.note or '' }}">
-  </div>
-  <button type="submit" class="btn btn-primary">Update Cash Entry</button>
-</form>
+</div>
 {% endblock %}

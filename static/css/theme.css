@@ -1,0 +1,185 @@
+/* Global dark theme palette */
+:root {
+    --bg-root: #0f172a;
+    --bg-elevated: rgba(30, 41, 59, 0.85);
+    --bg-card: rgba(15, 23, 42, 0.85);
+    --bg-input: rgba(30, 41, 59, 0.75);
+    --border-color: rgba(148, 163, 184, 0.25);
+    --accent: #38bdf8;
+    --accent-strong: #0ea5e9;
+    --accent-soft: rgba(56, 189, 248, 0.1);
+    --text-primary: #f8fafc;
+    --text-muted: #94a3b8;
+    --success: #4ade80;
+    --danger: #f87171;
+    --warning: #facc15;
+}
+
+body {
+    background: radial-gradient(circle at 10% 20%, rgba(14, 116, 144, 0.25), transparent 45%),
+                radial-gradient(circle at 90% 10%, rgba(79, 70, 229, 0.2), transparent 40%),
+                var(--bg-root);
+    color: var(--text-primary);
+}
+
+.navbar-dark {
+    background: linear-gradient(90deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9)) !important;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.navbar-brand span {
+    letter-spacing: .05em;
+}
+
+.navbar .nav-link {
+    color: var(--text-muted) !important;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.navbar .nav-link:hover,
+.navbar .nav-link.active {
+    color: var(--text-primary) !important;
+    transform: translateY(-1px);
+}
+
+.btn,
+.form-control,
+.form-select {
+    border-radius: 10px;
+    border-color: var(--border-color);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent-strong), #60a5fa);
+    border: none;
+    box-shadow: 0 15px 30px rgba(14, 165, 233, 0.25);
+}
+
+.btn-outline-primary,
+.btn-outline-secondary,
+.btn-outline-danger {
+    color: var(--text-primary);
+    border-color: var(--border-color);
+    background-color: transparent;
+}
+
+.btn-outline-primary:hover {
+    border-color: var(--accent);
+    background-color: var(--accent-soft);
+}
+
+.btn-outline-secondary:hover {
+    border-color: var(--text-muted);
+    background-color: rgba(148, 163, 184, 0.15);
+}
+
+.btn-outline-danger:hover {
+    border-color: var(--danger);
+    background-color: rgba(248, 113, 113, 0.15);
+}
+
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    backdrop-filter: blur(16px);
+    box-shadow: 0 15px 35px rgba(15, 23, 42, 0.4);
+}
+
+.card-title {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.form-control,
+.form-select {
+    background-color: var(--bg-input);
+    color: var(--text-primary);
+}
+
+.form-control::placeholder {
+    color: rgba(148, 163, 184, 0.6);
+}
+
+.table {
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.table thead th {
+    background-color: rgba(30, 41, 59, 0.75);
+    border-bottom: 2px solid var(--border-color);
+    font-weight: 600;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.table tbody tr {
+    transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(51, 65, 85, 0.25);
+    transform: translateY(-2px);
+}
+
+.table tbody td {
+    border-color: rgba(148, 163, 184, 0.12);
+}
+
+.alert {
+    border: none;
+    border-radius: 14px;
+    background-color: rgba(30, 41, 59, 0.9);
+    color: var(--text-primary);
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.35);
+}
+
+.alert-success {
+    border-left: 5px solid var(--success);
+}
+
+.alert-danger {
+    border-left: 5px solid var(--danger);
+}
+
+.alert-warning {
+    border-left: 5px solid var(--warning);
+}
+
+.footer {
+    color: var(--text-muted);
+    border-top: 1px solid rgba(148, 163, 184, 0.15);
+    background: rgba(15, 23, 42, 0.8);
+}
+
+.pill-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    background-color: rgba(148, 163, 184, 0.12);
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.glow-shadow {
+    box-shadow: 0 20px 45px rgba(14, 165, 233, 0.25);
+}
+
+.chart-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.chart-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.12), transparent 55%);
+    pointer-events: none;
+}

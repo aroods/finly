@@ -1,47 +1,66 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>All Transactions</h2>
-<table class="table table-bordered table-striped">
-  <thead>
-    <tr>
-      <th>Date</th>
-      <th>Asset</th>
-      <th>Category</th>
-      <th>Type</th>
-      <th>Quantity</th>
-      <th>Price at Buy</th>
-      <th>Total Cost</th>
-      <th>Currency</th>
-      <th>Events</th>
-      <th>Action</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for tx in transactions %}
-    <tr>
-      <td>{{ tx[1] }}</td>
-      <td>{{ tx[2] }}</td>
-      <td>{{ tx[7] }}</td>
-      <td>{{ tx[3] }}</td>
-      <td>{{ "%.2f"|format(tx[4]) }}</td>
-      <td>{{ "%.2f"|format(tx[5]) }}</td>
-      <td>{{ "%.2f"|format(tx[4] * tx[5]) }}</td>
-      <td>{{ tx[6] }}</td>
-      <td>
-        <button class="btn btn-link p-0 show-events-btn" data-symbol="{{ tx[2] }}" data-row="{{ tx[0] }}">&#x25BC;</button>
-      </td>
-      <td>
-        <a class="btn btn-sm btn-secondary" href="{{ url_for('transactions.edit_transaction', tx_id=tx[0]) }}">Edit</a>
-      </td>
-    </tr>
-    <tr class="event-row" id="event-row-{{ tx[0] }}" style="display:none;">
-      <td colspan="10">
-        <div class="event-dates-content" id="event-content-{{ tx[0] }}">Loading events...</div>
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-semibold mb-1">Transactions</h1>
+    <p class="text-muted mb-0">Review, edit and enrich every movement across your portfolio.</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('transactions.add_transaction') }}">Add Transaction</a>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Asset</th>
+            <th>Category</th>
+            <th>Type</th>
+            <th class="text-end">Quantity</th>
+            <th class="text-end">Price</th>
+            <th class="text-end">Total Cost</th>
+            <th>Currency</th>
+            <th>Events</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tx in transactions %}
+          <tr>
+            <td>{{ tx[1] }}</td>
+            <td class="fw-semibold">{{ tx[2] }}</td>
+            <td><span class="pill-badge">{{ tx[7] }}</span></td>
+            <td>
+              <span class="pill-badge" style="background-color: rgba(56, 189, 248, 0.12); color: var(--text-primary);">
+                {{ tx[3]|upper }}
+              </span>
+            </td>
+            <td class="text-end">{{ "%.2f"|format(tx[4]) }}</td>
+            <td class="text-end">{{ "%.2f"|format(tx[5]) }}</td>
+            <td class="text-end">{{ "%.2f"|format(tx[4] * tx[5]) }}</td>
+            <td>{{ tx[6] }}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary show-events-btn" data-symbol="{{ tx[2] }}" data-row="{{ tx[0] }}">
+                Details
+              </button>
+            </td>
+            <td>
+              <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('transactions.edit_transaction', tx_id=tx[0]) }}">Edit</a>
+            </td>
+          </tr>
+          <tr class="event-row" id="event-row-{{ tx[0] }}" style="display:none;">
+            <td colspan="10">
+              <div class="event-dates-content small text-muted" id="event-content-{{ tx[0] }}">Loading events...</div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
 <script>
   document.querySelectorAll('.show-events-btn').forEach(btn => {
@@ -50,10 +69,9 @@
           const symbol = this.dataset.symbol;
           const row = document.getElementById('event-row-' + txId);
           const content = document.getElementById('event-content-' + txId);
-          // Toggle the row
           if (row.style.display === "none") {
               row.style.display = "";
-              // If not already loaded, fetch event dates
+              this.textContent = 'Hide';
               if (!content.dataset.loaded) {
                   fetch(`/api/event-dates?symbol=${symbol}`)
                     .then(resp => resp.json())
@@ -62,28 +80,26 @@
                         if (data.error) {
                             html = "<span class='text-danger'>No data or error: " + data.error + "</span>";
                         } else {
-                            html = "<ul class='mb-0'>";
-                            if (data.dividend_date) html += `<li><b>Next Dividend Date:</b> ${data.dividend_date}</li>`;
-                            if (data.earnings_date) html += `<li><b>Next Earnings Date:</b> ${data.earnings_date}</li>`;
+                            const items = [];
+                            if (data.dividend_date) items.push(`<li><strong>Next Dividend:</strong> ${data.dividend_date}</li>`);
+                            if (data.earnings_date) items.push(`<li><strong>Earnings:</strong> ${data.earnings_date}</li>`);
                             if (data.future_earnings_dates && data.future_earnings_dates.length > 0) {
-                                html += `<li><b>Future Earnings Dates:</b> ${data.future_earnings_dates.join(', ')}</li>`;
+                                items.push(`<li><strong>Future Earnings:</strong> ${data.future_earnings_dates.join(', ')}</li>`);
                             }
-                            if (html === "<ul class='mb-0'>") html += "<li>No upcoming events found.</li>";
-                            html += "</ul>";
+                            html = items.length ? `<ul class='mb-0'>${items.join('')}</ul>` : "<span>No upcoming events found.</span>";
                         }
                         content.innerHTML = html;
                         content.dataset.loaded = "1";
                     })
-                    .catch(e => {
+                    .catch(() => {
                         content.innerHTML = "<span class='text-danger'>Failed to load events.</span>";
                     });
               }
-              this.innerHTML = "&#x25B2;"; // Up arrow
           } else {
               row.style.display = "none";
-              this.innerHTML = "&#x25BC;"; // Down arrow
+              this.textContent = 'Details';
           }
       });
   });
-  </script>
+</script>
 {% endblock %}
