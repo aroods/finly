@@ -20,6 +20,8 @@
   </div>
 </div>
 
+{% set profit_positive = total_profit_pln >= 0 %}
+
 {% if cache_stats %}
   <div class="pill-badge mb-4">
     Cache entries: {{ cache_stats.total_items }} · Oldest: {{ cache_stats.oldest if cache_stats.oldest is not none else 'n/a' }} · Latest: {{ cache_stats.newest if cache_stats.newest is not none else 'n/a' }}
@@ -31,7 +33,7 @@
     <div class="card glow-shadow h-100">
       <div class="card-body">
         <p class="text-muted text-uppercase mb-1" style="font-size:.7rem; letter-spacing:.16em;">Total Portfolio Value</p>
-        <h3 class="fw-semibold mb-2">{{ "%.2f"|format(total_value_pln) }} PLN</h3>
+        <h3 class="fw-semibold mb-2 text-highlight">{{ "%.2f"|format(total_value_pln) }} PLN</h3>
         <span class="text-muted small">Including cash and market value</span>
       </div>
     </div>
@@ -40,11 +42,11 @@
     <div class="card h-100">
       <div class="card-body">
         <p class="text-muted text-uppercase mb-1" style="font-size:.7rem; letter-spacing:.16em;">Total Profit</p>
-        <h3 class="fw-semibold mb-2">{{ "%.2f"|format(total_profit_pln) }} PLN</h3>
-        {% if total_profit_pln >= 0 %}
-          <span class="text-success small">On track • Keep up the momentum</span>
+        <h3 class="fw-semibold mb-2 {{ "text-profit-positive" if profit_positive else "text-profit-negative" }}">{{ "%.2f"|format(total_profit_pln) }} PLN</h3>
+        {% if profit_positive %}
+          <span class="text-profit-positive small">On track • Keep up the momentum</span>
         {% else %}
-          <span class="text-danger small">Review positions for optimisations</span>
+          <span class="text-profit-negative small">Review positions for optimisations</span>
         {% endif %}
       </div>
     </div>
@@ -53,7 +55,7 @@
     <div class="card h-100">
       <div class="card-body">
         <p class="text-muted text-uppercase mb-1" style="font-size:.7rem; letter-spacing:.16em;">Cash Position</p>
-        <h3 class="fw-semibold mb-2">{{ "%.2f"|format(current_cash) }} PLN</h3>
+        <h3 class="fw-semibold mb-2 text-highlight">{{ "%.2f"|format(current_cash) }} PLN</h3>
         <span class="text-muted small">Available liquidity for next moves</span>
       </div>
     </div>

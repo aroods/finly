@@ -9,10 +9,30 @@
     --accent-strong: #0ea5e9;
     --accent-soft: rgba(56, 189, 248, 0.1);
     --text-primary: #f8fafc;
-    --text-muted: rgba(203, 213, 225, 0.8);
+    --text-muted: rgba(252, 252, 252, 0.9);
     --success: #4ade80;
     --danger: #f87171;
     --warning: #facc15;
+}
+
+.text-muted,
+.card .text-muted,
+p.text-muted,
+small.text-muted {
+    color: var(--text-muted) !important;
+    opacity: 1;
+}
+
+.text-highlight {
+    color: var(--text-primary) !important;
+}
+
+.text-profit-positive {
+    color: #4ade80 !important;
+}
+
+.text-profit-negative {
+    color: #f87171 !important;
 }
 
 body {
@@ -32,7 +52,7 @@ body {
 }
 
 .navbar .nav-link {
-    color: rgba(226, 232, 240, 0.8) !important;
+    color: rgba(226, 232, 240, 0.92) !important;
     transition: color 0.2s ease, transform 0.2s ease;
 }
 
@@ -98,7 +118,11 @@ body {
 }
 
 .form-control::placeholder {
-    color: rgba(148, 163, 184, 0.6);
+    color: rgba(203, 213, 225, 0.75);
+}
+
+.form-text {
+    color: rgba(236, 242, 255, 0.85);
 }
 
 .table {
