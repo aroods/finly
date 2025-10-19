@@ -71,8 +71,6 @@ def dashboard():
         current_price_local = current_prices.get(asset, 0.0)
         fx_rate = current_fx_rates.get(asset, 1.0)
 
-        if weighted_avg_price_local > 0 and current_price_local > weighted_avg_price_local * 20:
-            current_price_local = current_price_local / 100.0
 
         weighted_avg_price_pln = weighted_avg_price_local * fx_rate
         investment_cost_pln = investment_cost_local * fx_rate
