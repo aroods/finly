@@ -1,94 +1,145 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, redirect, url_for, flash
+
 from db import get_db
-from helpers import calculate_weighted_avg, calculate_investment_cost, calculate_profit_loss, get_current_prices
+from helpers import (
+    summarize_positions,
+    get_current_prices,
+    build_profit_timeseries,
+    get_fx_rates_for_assets,
+)
 from cache_store import CACHE
 
+
 dashboard_bp = Blueprint("dashboard", __name__)
+
 
 @dashboard_bp.route('/')
 def dashboard():
     db = get_db()
     cur = db.cursor()
 
-    # 1. Get all transactions
-    cur.execute("SELECT asset, category, type, quantity, price, currency FROM transactions")
-    transactions = cur.fetchall()
-    
-    # 2. Group transactions by asset & category
-    # Key: (asset, category, currency)
-    assets = {}
+    cur.execute(
+        """
+        SELECT id, date, asset, category, type, quantity, price, currency
+        FROM transactions
+        ORDER BY date ASC, id ASC
+        """
+    )
+    rows = cur.fetchall()
+    transactions = [
+        {
+            "id": row[0],
+            "date": row[1],
+            "asset": row[2],
+            "category": row[3],
+            "type": row[4],
+            "quantity": row[5],
+            "price": row[6],
+            "currency": row[7],
+        }
+        for row in rows
+    ]
+
+    asset_currency_map = {}
     for tx in transactions:
-        asset, category, tx_type, quantity, price, currency = tx
-        key = (asset, category, currency)
-        if key not in assets:
-            assets[key] = {"buys": [], "sells": []}
-        if tx_type == "buy":
-            assets[key]["buys"].append((quantity, price))
-        elif tx_type == "sell":
-            assets[key]["sells"].append((quantity, price))
-    
-    # 3. Get latest prices for all assets (you may already cache this)
-    asset_symbols = list({asset for asset, _, _ in assets.keys()})
-    # You must implement get_current_prices
-    current_prices, current_currencies = get_current_prices(asset_symbols)
-    # Example: current_prices = {'AAPL': 200.5, 'PKO.WA': 100.2, ...}
+        asset = tx.get("asset")
+        if not asset:
+            continue
+        asset_currency_map.setdefault(asset, tx.get("currency") or "PLN")
+
+    positions = summarize_positions(transactions)
+    open_positions = {
+        key: data for key, data in positions.items() if data["net_quantity"] > 0
+    }
+
+    asset_symbols = [asset for (asset, _, _), _ in open_positions.items()]
+    current_prices, current_currencies, current_fx_rates = get_current_prices(asset_symbols)
 
     dashboard_rows = []
     total_value_pln = 0.0
+    adjusted_current_prices = {}
 
-    # 4. Compute summaries
-    for (asset, category, currency), txs in assets.items():
-        total_bought = sum(q for q, _ in txs["buys"])
-        total_sold = sum(q for q, _ in txs["sells"])
-        net_qty = total_bought - total_sold
+    for (asset, category, currency), data in sorted(
+        open_positions.items(), key=lambda item: item[0][0]
+    ):
+        net_qty = data["net_quantity"]
+        if net_qty <= 0:
+            continue
 
-        wavg_price = calculate_weighted_avg(txs["buys"]) if txs["buys"] else 0
-        investment_cost = calculate_investment_cost(txs["buys"])
-        current_price = current_prices.get(asset, 0)
-        current_currency = current_currencies.get(asset, None)
-        current_value = current_price * net_qty
-        profit_loss_pln, profit_loss_perc = calculate_profit_loss(current_value, investment_cost)
+        investment_cost_local = data["cost_basis"]
+        weighted_avg_price_local = investment_cost_local / net_qty if net_qty else 0.0
+        current_price_local = current_prices.get(asset, 0.0)
+        fx_rate = current_fx_rates.get(asset, 1.0)
 
-        dashboard_rows.append({
-            "asset": asset,
-            "category": category,
-            "quantity": net_qty,
-            "weighted_avg_price": wavg_price,
-            "investment_cost": investment_cost,
-            "current_price": current_price,
-            "current_value": current_value,
-            "profit_loss_pln": profit_loss_pln,
-            "profit_loss_perc": profit_loss_perc
-        })
+        if weighted_avg_price_local > 0 and current_price_local > weighted_avg_price_local * 20:
+            current_price_local = current_price_local / 100.0
 
-        total_value_pln += current_value
+        weighted_avg_price_pln = weighted_avg_price_local * fx_rate
+        investment_cost_pln = investment_cost_local * fx_rate
+        current_price_pln = current_price_local * fx_rate
+        current_value_pln = current_price_pln * net_qty
+        profit_loss_pln = current_value_pln - investment_cost_pln
+        profit_loss_perc = (profit_loss_pln / investment_cost_pln * 100) if investment_cost_pln else 0.0
+        display_currency = currency or current_currencies.get(asset) or 'PLN'
 
-    # 5. Get current cash
+        dashboard_rows.append(
+            {
+                "asset": asset,
+                "category": category,
+                "currency": display_currency,
+                "quantity": net_qty,
+                "weighted_avg_price_local": weighted_avg_price_local,
+                "weighted_avg_price_pln": weighted_avg_price_pln,
+                "investment_cost_pln": investment_cost_pln,
+                "current_price_local": current_price_local,
+                "current_price_pln": current_price_pln,
+                "current_value_pln": current_value_pln,
+                "profit_loss_pln": profit_loss_pln,
+                "profit_loss_perc": profit_loss_perc,
+            }
+        )
+
+        adjusted_current_prices[asset] = current_price_local
+        total_value_pln += current_value_pln
+
     cur.execute("SELECT amount FROM cash_deposits ORDER BY created_at DESC LIMIT 1")
     cash_row = cur.fetchone()
     current_cash = cash_row[0] if cash_row else 0.0
     total_value_pln += current_cash
 
-    # 6. Asset allocation for pie chart (includes cash)
-    pie_labels = [row["asset"] for row in dashboard_rows] + ["Cash"]
-    pie_values = [row["current_value"] for row in dashboard_rows] + [current_cash]
+    pie_labels = [row["asset"] for row in dashboard_rows]
+    pie_values = [row["current_value_pln"] for row in dashboard_rows]
+    if current_cash:
+        pie_labels.append("Cash")
+        pie_values.append(current_cash)
+
+    fx_rates_all = get_fx_rates_for_assets(asset_currency_map)
+    profit_series = build_profit_timeseries(transactions, fx_rates_all, adjusted_current_prices)
+
+    total_profit_pln = round(sum(row["profit_loss_pln"] for row in dashboard_rows), 2)
+    if profit_series:
+        profit_series[-1]["value"] = total_profit_pln
 
     try:
         stats = CACHE.stats()
     except Exception:
         stats = None
-    return render_template('index.html',
+
+    return render_template(
+        'index.html',
         dashboard_rows=dashboard_rows,
         current_cash=current_cash,
         total_value_pln=total_value_pln,
         pie_labels=pie_labels,
         pie_values=pie_values,
-        cache_stats=stats
+        cache_stats=stats,
+        profit_series=profit_series,
+        total_profit_pln=total_profit_pln,
     )
+
 
 @dashboard_bp.route('/refresh')
 def refresh_prices():
-    # You may want to force-update cache, or just redirect (dashboard will always fetch fresh on load)
     flash("Prices refreshed!", "success")
     return redirect(url_for('dashboard.dashboard'))
 

@@ -2,18 +2,15 @@
 {% block content %}
 <h2>Dashboard</h2>
 
-<!-- Refresh & Cache Controls -->
 <div class="d-flex flex-wrap gap-2 mb-3">
   <form method="POST" action="{{ url_for('dashboard.clear_cache') }}">
     <input type="hidden" name="prefix" value="price:">
     <button class="btn btn-outline-primary" type="submit">Clear Price Cache</button>
   </form>
-
   <form method="POST" action="{{ url_for('dashboard.clear_cache') }}">
     <input type="hidden" name="prefix" value="events:">
     <button class="btn btn-outline-secondary" type="submit">Clear Events Cache</button>
   </form>
-
   <form method="POST" action="{{ url_for('dashboard.clear_cache') }}">
     <button class="btn btn-outline-danger" type="submit">Clear ALL Cache</button>
   </form>
@@ -27,22 +24,41 @@
   </div>
 {% endif %}
 
-<!-- Asset Allocation Pie Chart -->
-<div class="text-center" style="max-width: 400px; margin: auto;">
-  <canvas id="pieChart" style="max-width: 100%; height: 220px;"></canvas>
+<div class="row g-3 mb-4">
+  <div class="col-lg-6">
+    {% if profit_series %}
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+          <h5 class="card-title mb-0">Profit Trend (PLN)</h5>
+          <span class="text-muted">Total: {{ "%.2f"|format(total_profit_pln) }} PLN</span>
+        </div>
+        <canvas id="profitChart" height="140"></canvas>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h5 class="card-title mb-3">Allocation (PLN)</h5>
+        <canvas id="pieChart" height="140"></canvas>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- Portfolio Summary Table -->
 <table class="table table-bordered table-striped">
   <thead>
     <tr>
       <th>Asset</th>
       <th>Category</th>
+      <th>Currency</th>
       <th>Quantity</th>
-      <th>Weighted Avg Price</th>
-      <th>Investment Cost</th>
+      <th>Avg Cost</th>
+      <th>Investment (PLN)</th>
       <th>Current Price</th>
-      <th>Value (Current)</th>
+      <th>Value (PLN)</th>
       <th>Profit/Loss (PLN)</th>
       <th>Profit/Loss (%)</th>
     </tr>
@@ -52,11 +68,12 @@
     <tr>
       <td>{{ row.asset }}</td>
       <td>{{ row.category }}</td>
+      <td>{{ row.currency }}</td>
       <td>{{ "%.2f"|format(row.quantity) }}</td>
-      <td>{{ "%.2f"|format(row.weighted_avg_price) }}</td>
-      <td>{{ "%.2f"|format(row.investment_cost) }}</td>
-      <td>{{ "%.2f"|format(row.current_price) }}</td>
-      <td>{{ "%.2f"|format(row.current_value) }}</td>
+      <td>{{ "%.2f"|format(row.weighted_avg_price_local) }} {{ row.currency }}</td>
+      <td>{{ "%.2f"|format(row.investment_cost_pln) }}</td>
+      <td>{{ "%.2f"|format(row.current_price_local) }} {{ row.currency }}</td>
+      <td>{{ "%.2f"|format(row.current_value_pln) }}</td>
       <td>{{ "%.2f"|format(row.profit_loss_pln) }}</td>
       <td>{{ "%.2f"|format(row.profit_loss_perc) }}%</td>
     </tr>
@@ -64,6 +81,7 @@
     <tr>
       <td>Cash</td>
       <td>Deposit</td>
+      <td>PLN</td>
       <td>-</td>
       <td>-</td>
       <td>-</td>
@@ -75,17 +93,63 @@
   </tbody>
 </table>
 
-<!-- Pie chart JS -->
- 
 <script>
 const pieLabels = {{ pie_labels|tojson }};
 const pieData   = {{ pie_values|tojson }};
-new Chart(document.getElementById('pieChart'), {
-    type: 'pie',
-    data: {
-      labels: pieLabels,
-      datasets: [{ data: pieData }]
-    }
-});
+if (pieLabels.length && pieData.length) {
+  new Chart(document.getElementById('pieChart').getContext('2d'), {
+      type: 'pie',
+      data: {
+        labels: pieLabels,
+        datasets: [{
+          data: pieData,
+          backgroundColor: [
+            '#0d6efd','#6610f2','#6f42c1','#d63384','#dc3545','#fd7e14',
+            '#ffc107','#198754','#20c997','#0dcaf0','#adb5bd'
+          ]
+        }]
+      }
+  });
+}
+
+const profitSeries = {{ profit_series|tojson }};
+if (profitSeries && profitSeries.length) {
+    const profitCtx = document.getElementById('profitChart').getContext('2d');
+    const profitLabels = profitSeries.map(point => point.date);
+    const profitData = profitSeries.map(point => point.value);
+    new Chart(profitCtx, {
+        type: 'line',
+        data: {
+            labels: profitLabels,
+            datasets: [{
+                label: 'Total Profit (PLN)',
+                data: profitData,
+                borderColor: 'rgb(13, 110, 253)',
+                backgroundColor: 'rgba(13, 110, 253, 0.08)',
+                tension: 0.25,
+                fill: true,
+                pointRadius: 0,
+            }]
+        },
+        options: {
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    ticks: { maxTicksLimit: 8 }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: (value) => {
+                            return typeof value === 'number' ? value.toFixed(0) : value;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
 </script>
 {% endblock %}
