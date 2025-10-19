@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, flash
+from datetime import datetime
 
 from db import get_db
 from helpers import (
@@ -7,6 +8,7 @@ from helpers import (
     build_profit_timeseries,
     get_fx_rates_for_assets,
 )
+from bond_helpers import parse_bond_row, calculate_accrual
 from cache_store import CACHE
 
 
@@ -56,8 +58,9 @@ def dashboard():
     current_prices, current_currencies, current_fx_rates = get_current_prices(asset_symbols)
 
     dashboard_rows = []
-    total_value_pln = 0.0
     adjusted_current_prices = {}
+    equity_total_value = 0.0
+    equity_profit_total = 0.0
 
     for (asset, category, currency), data in sorted(
         open_positions.items(), key=lambda item: item[0][0]
@@ -70,7 +73,6 @@ def dashboard():
         weighted_avg_price_local = investment_cost_local / net_qty if net_qty else 0.0
         current_price_local = current_prices.get(asset, 0.0)
         fx_rate = current_fx_rates.get(asset, 1.0)
-
 
         weighted_avg_price_pln = weighted_avg_price_local * fx_rate
         investment_cost_pln = investment_cost_local * fx_rate
@@ -98,25 +100,97 @@ def dashboard():
         )
 
         adjusted_current_prices[asset] = current_price_local
-        total_value_pln += current_value_pln
+        equity_total_value += current_value_pln
+        equity_profit_total += profit_loss_pln
 
     cur.execute("SELECT amount FROM cash_deposits ORDER BY created_at DESC LIMIT 1")
     cash_row = cur.fetchone()
     current_cash = cash_row[0] if cash_row else 0.0
-    total_value_pln += current_cash
 
-    pie_labels = [row["asset"] for row in dashboard_rows]
-    pie_values = [row["current_value_pln"] for row in dashboard_rows]
-    if current_cash:
-        pie_labels.append("Cash")
-        pie_values.append(current_cash)
+    cur.execute("SELECT * FROM bonds ORDER BY purchase_date DESC, id DESC")
+    bond_rows_raw = cur.fetchall()
+    bond_positions = [parse_bond_row(row) for row in bond_rows_raw]
+    bond_rows = []
+    bond_total_value = 0.0
+    bond_total_accrued = 0.0
+    for bond in bond_positions:
+        accrual = calculate_accrual(bond)
+        bond_rows.append((bond, accrual))
+        bond_total_value += accrual["current_value"]
+        bond_total_accrued += accrual["accrued_interest"]
+
+    total_value_pln = equity_total_value + current_cash + bond_total_value
 
     fx_rates_all = get_fx_rates_for_assets(asset_currency_map)
     profit_series = build_profit_timeseries(transactions, fx_rates_all, adjusted_current_prices)
 
-    total_profit_pln = round(sum(row["profit_loss_pln"] for row in dashboard_rows), 2)
     if profit_series:
-        profit_series[-1]["value"] = total_profit_pln
+        for point in profit_series:
+            point_date = datetime.fromisoformat(point["date"]).date()
+            bond_contribution = 0.0
+            for bond in bond_positions:
+                accrual = calculate_accrual(bond, reference=point_date)
+                bond_contribution += accrual["accrued_interest"]
+            point["value"] = round(point["value"] + bond_contribution, 2)
+        total_profit_pln = profit_series[-1]["value"]
+    else:
+        total_profit_pln = round(equity_profit_total + bond_total_accrued, 2)
+
+    overview_colors = {
+        "Equities/ETFs": "#38bdf8",
+        "Bonds": "#10b981",
+        "Cash": "#facc15",
+    }
+
+    def cycle_colors(base_colors, count):
+        if not base_colors:
+            return []
+        return [base_colors[i % len(base_colors)] for i in range(count)]
+
+    equity_detail_data = [
+        {"label": row["asset"], "value": round(row["current_value_pln"], 2)}
+        for row in dashboard_rows
+    ]
+    bond_detail_data = [
+        {"label": bond.series, "value": round(accrual["current_value"], 2)}
+        for bond, accrual in bond_rows
+    ]
+
+    EQUITY_COLORS = [
+        "#38bdf8", "#818cf8", "#f472b6", "#fb7185", "#f97316",
+        "#facc15", "#4ade80", "#34d399", "#22d3ee", "#a855f7", "#64748b"
+    ]
+    BOND_COLORS = [
+        "#10b981", "#34d399", "#22d3ee", "#0ea5e9", "#14b8a6", "#2dd4bf", "#5eead4", "#99f6e4"
+    ]
+
+    equity_total_value = round(equity_total_value, 2)
+    equity_profit_total_rounded = round(equity_profit_total, 2)
+    bond_total_value = round(bond_total_value, 2)
+    current_cash = round(current_cash, 2)
+    bond_total_accrued = round(bond_total_accrued, 2)
+    total_value_pln = round(total_value_pln, 2)
+
+    pie_overview = [
+        {"label": "Equities/ETFs", "value": equity_total_value, "color": overview_colors["Equities/ETFs"]},
+        {"label": "Bonds", "value": bond_total_value, "color": overview_colors["Bonds"]},
+        {"label": "Cash", "value": current_cash, "color": overview_colors["Cash"]},
+    ]
+
+    pie_detail_map = {
+        "Equities/ETFs": {
+            "data": equity_detail_data,
+            "colors": cycle_colors(EQUITY_COLORS, len(equity_detail_data)),
+        },
+        "Bonds": {
+            "data": bond_detail_data,
+            "colors": cycle_colors(BOND_COLORS, len(bond_detail_data)),
+        },
+        "Cash": {
+            "data": [{"label": "Cash", "value": current_cash}],
+            "colors": [overview_colors["Cash"]],
+        },
+    }
 
     try:
         stats = CACHE.stats()
@@ -128,11 +202,16 @@ def dashboard():
         dashboard_rows=dashboard_rows,
         current_cash=current_cash,
         total_value_pln=total_value_pln,
-        pie_labels=pie_labels,
-        pie_values=pie_values,
         cache_stats=stats,
         profit_series=profit_series,
         total_profit_pln=total_profit_pln,
+        bond_rows=bond_rows,
+        bond_total_value=bond_total_value,
+        bond_total_accrued=bond_total_accrued,
+        pie_overview=pie_overview,
+        pie_detail_map=pie_detail_map,
+        equity_total_value=equity_total_value,
+        equity_profit_total=equity_profit_total_rounded,
     )
 
 

@@ -26,23 +26,13 @@
             <a class="nav-link" href="{{ url_for('dashboard.dashboard') }}">Dashboard</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('transactions.all_transactions') }}">Transactions</a>
+            <a class="nav-link" href="{{ url_for('transactions.all_transactions') }}">Equities</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('cash.cash_history') }}">Cash History</a>
           </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="addDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              Add...
-            </a>
-            <ul class="dropdown-menu" aria-labelledby="addDropdown">
-              <li>
-                <a class="dropdown-item" href="{{ url_for('transactions.add_transaction') }}">Add Transaction</a>
-              </li>
-              <li>
-                <a class="dropdown-item" href="{{ url_for('cash.add_cash') }}">Add Cash State</a>
-              </li>
-            </ul>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('bonds.list_bonds') }}">Bonds</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('about.about') }}">About</a>

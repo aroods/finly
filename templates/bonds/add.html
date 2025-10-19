@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="col-lg-8 mx-auto">
+  <div class="card">
+    <div class="card-body">
+      <h2 class="h4 fw-semibold mb-4">Add Bond Position</h2>
+      <form method="POST" class="row g-3">
+        <div class="col-md-6">
+          <label for="series" class="form-label">Series</label>
+          <input type="text" id="series" name="series" class="form-control text-uppercase" placeholder="np. EDO1230" required>
+        </div>
+        <div class="col-md-6">
+          <label for="bond_type" class="form-label">Type</label>
+          <select id="bond_type" name="bond_type" class="form-select">
+            <option value="fixed">Stałoprocentowe (np. TOS)</option>
+            <option value="indexed">Indeksowane (np. Rodzinne)</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label for="purchase_date" class="form-label">Purchase Date</label>
+          <input type="date" id="purchase_date" name="purchase_date" class="form-control" value="{{ today }}" required>
+        </div>
+        <div class="col-md-6">
+          <label for="maturity_date" class="form-label">Maturity Date</label>
+          <input type="date" id="maturity_date" name="maturity_date" class="form-control" required>
+        </div>
+        <div class="col-md-4">
+          <label for="quantity" class="form-label">Quantity</label>
+          <input type="number" id="quantity" name="quantity" class="form-control" min="1" step="1" required>
+        </div>
+        <div class="col-md-4">
+          <label for="unit_price" class="form-label">Unit Purchase Price (PLN)</label>
+          <input type="number" id="unit_price" name="unit_price" class="form-control" step="0.01" required>
+        </div>
+        <div class="col-md-4">
+          <label for="face_value" class="form-label">Nominal per Bond (PLN)</label>
+          <input type="number" id="face_value" name="face_value" class="form-control" step="0.01" required>
+        </div>
+        <div class="col-md-4">
+          <label for="annual_rate" class="form-label">Base Rate (%)</label>
+          <input type="number" id="annual_rate" name="annual_rate" class="form-control" step="0.01" required>
+        </div>
+        <div class="col-md-4">
+          <label for="margin" class="form-label">Margin (pp)</label>
+          <input type="number" id="margin" name="margin" class="form-control" step="0.01" value="0">
+          <div class="form-text">Dodatkowa marża ponad wskaźnik (dla rodzinnych).</div>
+        </div>
+        <div class="col-md-4">
+          <label for="index_rate" class="form-label">Index Rate (%)</label>
+          <input type="number" id="index_rate" name="index_rate" class="form-control" step="0.01" value="0">
+          <div class="form-text">Aktualny wskaźnik inflacji / indeksacji.</div>
+        </div>
+        <div class="col-12">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="capitalization" name="capitalization" checked>
+            <label class="form-check-label" for="capitalization">
+              Capitalize interest (dodawanie odsetek do kapitału)
+            </label>
+          </div>
+        </div>
+        <div class="col-12">
+          <label for="notes" class="form-label">Notes</label>
+          <textarea id="notes" name="notes" class="form-control" rows="2" placeholder="Dodatkowe informacje"></textarea>
+        </div>
+        <div class="col-12 d-flex justify-content-end gap-2 pt-3">
+          <a href="{{ url_for('bonds.list_bonds') }}" class="btn btn-outline-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary">Save Bond</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

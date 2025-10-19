@@ -48,6 +48,25 @@ def init_db():
     )
     ''')
 
+    # Bonds table
+    cur.execute('''
+    CREATE TABLE IF NOT EXISTS bonds (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        series TEXT NOT NULL,
+        bond_type TEXT NOT NULL,
+        purchase_date TEXT NOT NULL,
+        maturity_date TEXT NOT NULL,
+        quantity INTEGER NOT NULL,
+        unit_price REAL NOT NULL,
+        face_value REAL NOT NULL,
+        annual_rate REAL NOT NULL,
+        margin REAL DEFAULT 0,
+        index_rate REAL DEFAULT 0,
+        capitalization INTEGER NOT NULL DEFAULT 1,
+        notes TEXT
+    )
+    ''')
+
     # Add any other tables (snapshots, etc.) here
     db.commit()
     db.close()

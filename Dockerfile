@@ -11,6 +11,7 @@ COPY app.py .
 COPY db.py .
 COPY helpers.py .
 COPY cache_store.py .
+COPY bond_helpers.py .
 COPY routes/ ./routes/
 COPY templates/ ./templates/
 COPY static/ ./static/
