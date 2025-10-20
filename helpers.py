@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, date as date_cls
 import math
 import yfinance as yf
 
-from cache_store import CacheStore
+from cache_store import CACHE
 
 
 def _safe_float(value):
@@ -25,8 +25,6 @@ def euro_datetime(value):
         return dt.strftime("%d.%m.%Y %H:%M:%S")
     return ''
 
-
-CACHE = CacheStore(db_path="portfolio.db")
 
 PENCE_TICKERS = {
     "NWG.L",
@@ -182,17 +180,30 @@ def get_current_prices(symbols):
     for symbol in symbols:
         if not symbol:
             continue
+
         cached = CACHE.get(f"price:{symbol}", PRICE_TTL)
         price = None
         currency = None
-        if cached:
+        raw_currency = None
+        cache_hit = False
+
+        if isinstance(cached, dict):
+            price = cached.get("price")
+            currency = cached.get("currency")
+            raw_currency = cached.get("raw_currency")
+            cache_hit = price is not None and currency is not None
+        elif cached:
+            # Legacy cache format (list/tuple) – force refresh to avoid re-scaling issues
+            cache_hit = False
+
+        if cache_hit:
             try:
-                price, currency = cached
                 price = float(price)
-            except Exception:
+            except (TypeError, ValueError):
                 price = None
-                currency = None
-        if price is None:
+                cache_hit = False
+
+        if not cache_hit:
             try:
                 ticker = yf.Ticker(symbol)
                 info = getattr(ticker, "fast_info", None)
@@ -203,34 +214,52 @@ def get_current_prices(symbols):
                         or info.get("previousClose")
                     )
                     currency = info.get("currency") or info.get("lastCurrency")
+                    raw_currency = currency
                 if price is None:
                     hist = ticker.history(period="1d")
                     if not hist.empty:
                         price = hist['Close'][-1]
                 if currency is None:
                     currency = getattr(ticker, "info", {}).get("currency")
+                if raw_currency is None:
+                    raw_currency = currency
             except Exception:
                 price = None
                 currency = None
+                raw_currency = None
+
         price = _safe_float(price)
-        raw_currency = currency
-        currency = _normalize_currency(currency)
-        if raw_currency in ("GBX", "GBp") and price:
-            price = float(price) / 100.0
-            currency = "GBP"
-        elif raw_currency == "GBP" and price and symbol in PENCE_TICKERS:
-            price = float(price) / 100.0
-        elif raw_currency == "GBP" and price:
-            price = float(price)
+        normalized_currency = _normalize_currency(currency)
+
+        if not cache_hit and raw_currency:
+            if raw_currency in ("GBX", "GBp") and price:
+                price = float(price) / 100.0
+                normalized_currency = "GBP"
+            elif raw_currency == "GBP" and price and symbol in PENCE_TICKERS:
+                price = float(price) / 100.0
+            elif raw_currency == "GBP" and price:
+                price = float(price)
+
+        currency = normalized_currency
         prices[symbol] = float(price)
         currencies[symbol] = currency
+
         if currency in currency_cache:
             fx_rates[symbol] = currency_cache[currency]
         else:
             fx_rate = _get_fx_rate_to_pln(currency)
             fx_rates[symbol] = fx_rate
             currency_cache[currency] = fx_rate
-        CACHE.set(f"price:{symbol}", (prices[symbol], currency))
+
+        CACHE.set(
+            f"price:{symbol}",
+            {
+                "price": prices[symbol],
+                "currency": currency,
+                "raw_currency": raw_currency,
+                "cache_version": 2,
+            },
+        )
     return prices, currencies, fx_rates
 
 
