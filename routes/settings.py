@@ -8,7 +8,7 @@ from db import get_db
 
 settings_bp = Blueprint("settings", __name__, url_prefix="/settings")
 
-SUPPORTED_PROVIDERS = ("twelvedata", "eod")
+SUPPORTED_PROVIDERS = ("twelvedata",)
 
 
 @settings_bp.route("/")
@@ -38,7 +38,7 @@ def mappings():
                 priority = 0
 
             if not internal_symbol or not provider_symbol or provider not in SUPPORTED_PROVIDERS:
-                flash("Uzupełnij symbol, provider i alias (dozwolone: twelvedata, eod).", "danger")
+                flash("Uzupełnij symbol, provider i alias (dozwolone: twelvedata).", "danger")
             else:
                 try:
                     cur.execute(

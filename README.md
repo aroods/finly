@@ -21,7 +21,7 @@ Track your stocks, ETFs, bonds, crypto, and cash deposits, with powerful dashboa
 - 🌍 **Automatic FX and Price Updates**  
   Pulls the latest prices and currency rates automatically (with caching to avoid API limits).
 - 💵 **Dividend Intelligence**  
-  Fetches upcoming payouts and history from Twelve Data + EOD, normalizes net/gross values, and surfaces them in a dedicated view.
+  Fetches upcoming payouts and history from Twelve Data (with manual fallback), normalizes net/gross values, and surfaces them in a dedicated view.
 - 🪙 **Bond Ledger**  
   Track Polish retail bonds (or add your own), with accrued interest calculations, dashboards, and amortization helpers.
 - 📝 **Full Transaction and Cash History**  
@@ -99,8 +99,7 @@ docker run -d --name finly -p 5000:5000 \
 
 - **Environment Variables:** defined in `.env`
   - `SECRET_KEY` — Session protection (optional but recommended).
-  - `TWELVE_DATA_API_KEY` — Required for dividend data.
-  - `EOD_API_KEY` — Required for dividend fallback and fundamentals.
+  - `TWELVE_DATA_API_KEY` — Required for dividend data (dividends endpoint).
 - **Logo:** Place your custom logo in `static/logo.png` (shown in navbar and About).
 - **Docker refresh:** use `./refresh_docker.sh` to rebuild the container with updated code and automatically pass through `.env`.
 
@@ -121,7 +120,6 @@ docker run -d --name finly -p 5000:5000 \
 | Service        | Variable               | Notes & Limits |
 |----------------|------------------------|----------------|
 | Twelve Data    | `TWELVE_DATA_API_KEY`  | Free tier: 8 requests/min, 800/day. Used for dividend feed. Cache TTL 12h to stay within limits. |
-| EOD Historical | `EOD_API_KEY`          | Free tier: 20 requests/day (trial) / paid for more. Used as fallback + fundamentals. Cache TTL 12-24h. |
 
 - For local runs, set keys directly in `.env`. Docker users can rely on `docker run --env-file .env` via `refresh_docker.sh`.
 - Clear cached data from the dashboard ⚙ menu when troubleshooting stale quotes or dividends.

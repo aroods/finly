@@ -10,7 +10,6 @@ from db import get_db
 from cache_store import CACHE
 from helpers import get_current_prices
 from services.twelvedata import fetch_dividends as td_fetch_dividends
-from services.eod import fetch_dividends as eod_fetch_dividends
 
 dividends_bp = Blueprint("dividends", __name__, url_prefix="/dividends")
 DIVIDEND_TTL = 12 * 60 * 60  # 12 hours
@@ -23,32 +22,6 @@ SYMBOL_TWELVE_MAP = {
     "PKN.WA": ["PKN", "PKN:WSE", "WSE:PKN"],
     "PZU.WA": ["PZU", "PZU:WSE", "WSE:PZU"],
 }
-
-SYMBOL_EOD_MAP = {
-    "INTC": "US.INTC",
-    "AAPL": "US.AAPL",
-    "MSFT": "US.MSFT",
-    "NWG.L": "LSE.NWG",
-    "PKN.WA": "WSE.PKN",
-    "PZU.WA": "WSE.PZU",
-}
-
-EOD_SUFFIX_MAP = {
-    'L': 'LSE',
-    'LN': 'LSE',
-    'WA': 'WAR',
-    'F': 'FRA',
-    'DE': 'FRA',
-    'AS': 'AMS',
-    'PA': 'PAR',
-    'MI': 'MIL',
-    'VX': 'VTX',
-    'SW': 'VTX',
-    'BR': 'BRU',
-    'TO': 'TO',
-    'CN': 'CN',
-}
-
 
 def get_symbol_mappings(asset: str, provider: str) -> list[str]:
     if not asset:
@@ -68,14 +41,11 @@ def get_symbol_mappings(asset: str, provider: str) -> list[str]:
     )
     return [row[0] for row in cur.fetchall()]
 
-
 def get_portfolio_assets():
     db = get_db()
     cur = db.cursor()
     cur.execute("SELECT DISTINCT asset FROM transactions WHERE asset IS NOT NULL AND asset != ''")
     return [row[0] for row in cur.fetchall()]
-
-
 
 def parse_twelve_dividends(asset: str, data: dict):
     results = []
@@ -106,36 +76,7 @@ def parse_twelve_dividends(asset: str, data: dict):
         })
     return results
 
-
-def parse_eod_dividends(asset: str, data):
-    results = []
-    if not data:
-        return results
-    items = data if isinstance(data, list) else data.get("dividends") or []
-    for item in items:
-        amount = item.get("value") or item.get("amount")
-        if amount is None:
-            continue
-        try:
-            amount = float(amount)
-        except (TypeError, ValueError):
-            continue
-        ex_date = item.get("date") or item.get("exDate")
-        pay_date = item.get("paymentDate") or item.get("payDate")
-        currency = item.get("currency") or "USD"
-        results.append({
-            "asset": asset,
-            "ex_date": ex_date,
-            "pay_date": pay_date,
-            "amount": amount,
-            "currency": currency,
-            "source": "eod",
-            "shares": None,
-        })
-
     return results
-
-
 
 def _twelvedata_candidates(asset: str):
     candidates = []
@@ -203,39 +144,6 @@ def get_twelvedata_candidates(asset: str) -> list[str]:
 
     return ordered
 
-
-def get_eod_candidates(asset: str) -> list[str]:
-    mapped = get_symbol_mappings(asset, 'eod')
-    seen: set[str] = set()
-    ordered: list[str] = []
-
-    def add(symbol: str):
-        sym = (symbol or '').strip()
-        if not sym or sym in seen:
-            return
-        seen.add(sym)
-        ordered.append(sym)
-
-    for symbol in mapped:
-        add(symbol)
-
-    asset_norm = (asset or '').strip().upper()
-    base = SYMBOL_EOD_MAP.get(asset_norm)
-    if base:
-        add(base)
-
-    if asset_norm:
-        add(asset_norm)
-        if '.' in asset_norm:
-            root, suffix = asset_norm.split('.', 1)
-            suffix_map_value = EOD_SUFFIX_MAP.get(suffix)
-            if suffix_map_value:
-                add(f"{root}.{suffix_map_value}")
-        else:
-            add(f"{asset_norm}.US")
-
-    return ordered
-
 def _parse_date(value):
     if not value:
         return None
@@ -248,7 +156,6 @@ def _parse_date(value):
             return datetime.strptime(value, '%Y-%m-%d').date()
         except ValueError:
             return None
-
 
 def _holdings_on_date(transactions, target_date, inclusive=True):
     if target_date is None:
@@ -264,7 +171,6 @@ def _holdings_on_date(transactions, target_date, inclusive=True):
     if net < 0:
         net = 0.0
     return round(net, 6)
-
 
 def _sync_dividend_shares(dividends):
     if not dividends:
@@ -331,7 +237,6 @@ def _sync_dividend_shares(dividends):
 
     return share_map
 
-
 def fetch_dividends_for_asset(asset: str):
     records: list[dict] = []
 
@@ -356,30 +261,8 @@ def fetch_dividends_for_asset(asset: str):
     if not records and td_errors:
         LOGGER.warning("Twelve Data dividend fetch fell back for %s: %s", asset, td_errors)
 
-    eod_candidates = get_eod_candidates(asset)
-    LOGGER.debug("EOD candidates for %s: %s", asset, eod_candidates)
-    eod_errors = []
-    for symbol in eod_candidates:
-        try:
-            eod_data = eod_fetch_dividends(symbol)
-        except Exception as exc:
-            LOGGER.warning("EOD dividend fetch failed for %s via %s: %s", asset, symbol, exc)
-            eod_errors.append((symbol, str(exc)))
-            continue
-        parsed_eod = parse_eod_dividends(asset, eod_data)
-        if parsed_eod:
-            for entry in parsed_eod:
-                entry.setdefault('status', 'synced')
-            LOGGER.info("EOD dividends fetched for %s via %s (%d entries)", asset, symbol, len(parsed_eod))
-            records.extend(parsed_eod)
-            break
-        LOGGER.debug("EOD response for %s via %s returned no records", asset, symbol)
-    if not records and eod_errors:
-        LOGGER.warning("EOD dividend lookup failed for %s: %s", asset, eod_errors)
-
     LOGGER.info("Total dividend records fetched for %s: %d", asset, len(records))
     return records
-
 
 def upsert_dividend(record):
     if not record.get("ex_date"):
@@ -426,7 +309,6 @@ def upsert_dividend(record):
     )
     db.commit()
 
-
 def refresh_dividends(force=False):
     last_sync = CACHE.get("dividends:last_sync", DIVIDEND_TTL)
     cached_result = CACHE.get("dividends:last_result", DIVIDEND_TTL) or {"processed": 0, "missing": []}
@@ -460,7 +342,6 @@ def refresh_dividends(force=False):
     LOGGER.info("Dividend refresh completed: %s", result)
     return result
 
-
 def load_dividends():
     db = get_db()
     cur = db.cursor()
@@ -473,7 +354,6 @@ def load_dividends():
     )
     rows = cur.fetchall()
     return rows
-
 
 def enrich_with_market_data(dividends):
     share_map = _sync_dividend_shares(dividends)
@@ -525,7 +405,6 @@ def enrich_with_market_data(dividends):
         })
     return enriched
 
-
 @dividends_bp.route("/", methods=["GET", "POST"])
 def list_dividends():
     if request.method == "POST":
@@ -559,7 +438,6 @@ def list_dividends():
         missing_assets=result.get("missing", []),
         refresh_result=result,
     )
-
 
 @dividends_bp.route("/manual", methods=["GET", "POST"])
 def add_manual_dividend():
