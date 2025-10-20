@@ -12,6 +12,7 @@ COPY db.py .
 COPY helpers.py .
 COPY cache_store.py .
 COPY bond_helpers.py .
+COPY symbol_utils.py .
 COPY services/ ./services/
 COPY routes/ ./routes/
 COPY templates/ ./templates/
