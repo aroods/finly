@@ -3,6 +3,8 @@ import math
 import yfinance as yf
 
 from cache_store import CACHE
+from services.twelvedata import fetch_logo
+from symbol_utils import build_twelvedata_candidates
 
 
 def _safe_float(value):
@@ -36,6 +38,7 @@ PRICE_TTL = 10 * 60      # 10 minutes
 EVENT_TTL = 24 * 60 * 60 # 24 hours
 FX_TTL = 60 * 60         # 1 hour
 HISTORY_TTL = 12 * 60 * 60  # 12 hours
+LOGO_TTL = 7 * 24 * 60 * 60  # 7 days
 
 
 def _get_price_history(symbol, start_date, end_date):
@@ -261,6 +264,36 @@ def get_current_prices(symbols):
             },
         )
     return prices, currencies, fx_rates
+
+
+
+def get_logo_url(asset: str) -> str:
+    """Return cached Twelve Data logo URL for the asset if available."""
+    if not asset:
+        return ""
+
+    cache_key = f"logo:{asset}"
+    cached = CACHE.get(cache_key, LOGO_TTL)
+    if cached is not None:
+        return cached
+
+    for symbol in build_twelvedata_candidates(asset):
+        try:
+            data = fetch_logo(symbol)
+        except Exception:
+            continue
+        logo_url = None
+        if isinstance(data, dict):
+            if data.get('status') == 'error':
+                continue
+            logo_url = data.get('url') or data.get('logo')
+        if logo_url:
+            CACHE.set(cache_key, logo_url)
+            return logo_url
+
+    CACHE.set(cache_key, "")
+    return ""
+
 
 
 def get_event_dates(symbol):

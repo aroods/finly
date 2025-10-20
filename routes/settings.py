@@ -5,6 +5,7 @@ from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 
 from db import get_db
+from services.twelvedata import search_symbols
 
 settings_bp = Blueprint("settings", __name__, url_prefix="/settings")
 
@@ -20,6 +21,9 @@ def settings_index():
 def mappings():
     db = get_db()
     cur = db.cursor()
+
+    search_results: list[dict] = []
+    search_context = {"internal_symbol": "", "query": ""}
 
     if request.method == "POST":
         action = request.form.get("action", "add")
@@ -55,44 +59,57 @@ def mappings():
                     )
                     db.commit()
                     flash("Alias symbolu zapisany.", "success")
-                except Exception as exc:  # pragma: no cover - sqlite errors surfaced to user
+                except Exception as exc:  # pragma: no cover
                     db.rollback()
                     flash(f"Nie udało się zapisać aliasu: {exc}", "danger")
+            return redirect(url_for("settings.mappings"))
 
-        elif action == "toggle":
+        if action == "toggle":
             mapping_id = request.form.get("mapping_id")
             try:
                 mapping_id_int = int(mapping_id)
             except (TypeError, ValueError):
                 flash("Nieprawidłowe ID aliasu.", "danger")
-                return redirect(url_for("settings.mappings"))
-
-            cur.execute("SELECT active FROM symbol_mappings WHERE id = ?", (mapping_id_int,))
-            row = cur.fetchone()
-            if not row:
-                flash("Alias nie istnieje.", "danger")
             else:
-                new_state = 0 if row[0] else 1
-                cur.execute(
-                    "UPDATE symbol_mappings SET active = ?, updated_at = ? WHERE id = ?",
-                    (new_state, now, mapping_id_int),
-                )
-                db.commit()
-                flash("Alias został {}.".format("wyłączony" if new_state == 0 else "włączony"), "info")
+                cur.execute("SELECT active FROM symbol_mappings WHERE id = ?", (mapping_id_int,))
+                row = cur.fetchone()
+                if not row:
+                    flash("Alias nie istnieje.", "danger")
+                else:
+                    new_state = 0 if row[0] else 1
+                    cur.execute(
+                        "UPDATE symbol_mappings SET active = ?, updated_at = ? WHERE id = ?",
+                        (new_state, now, mapping_id_int),
+                    )
+                    db.commit()
+                    flash("Alias został {}.".format("wyłączony" if new_state == 0 else "włączony"), "info")
+            return redirect(url_for("settings.mappings"))
 
-        elif action == "delete":
+        if action == "delete":
             mapping_id = request.form.get("mapping_id")
             try:
                 mapping_id_int = int(mapping_id)
             except (TypeError, ValueError):
                 flash("Nieprawidłowe ID aliasu.", "danger")
-                return redirect(url_for("settings.mappings"))
+            else:
+                cur.execute("DELETE FROM symbol_mappings WHERE id = ?", (mapping_id_int,))
+                db.commit()
+                flash("Alias został usunięty.", "info")
+            return redirect(url_for("settings.mappings"))
 
-            cur.execute("DELETE FROM symbol_mappings WHERE id = ?", (mapping_id_int,))
-            db.commit()
-            flash("Alias został usunięty.", "info")
+        if action == "search":
+            internal_symbol = (request.form.get("internal_symbol_search") or "").strip().upper()
+            query = (request.form.get("query") or "").strip()
+            search_context = {"internal_symbol": internal_symbol, "query": query}
 
-        return redirect(url_for("settings.mappings"))
+            if not query:
+                flash("Podaj zapytanie do wyszukania.", "warning")
+            else:
+                try:
+                    search_results = search_symbols(query)
+                except Exception as exc:
+                    flash(f"Nie udało się wyszukać symbolu: {exc}", "danger")
+                    search_results = []
 
     cur.execute(
         """
@@ -103,4 +120,10 @@ def mappings():
     )
     mappings = cur.fetchall()
 
-    return render_template("settings/mappings.html", mappings=mappings, providers=SUPPORTED_PROVIDERS)
+    return render_template(
+        "settings/mappings.html",
+        mappings=mappings,
+        providers=SUPPORTED_PROVIDERS,
+        search_results=search_results,
+        search_context=search_context,
+    )

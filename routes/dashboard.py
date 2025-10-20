@@ -7,6 +7,7 @@ from helpers import (
     get_current_prices,
     build_profit_timeseries,
     get_fx_rates_for_assets,
+    get_logo_url,
 )
 from bond_helpers import parse_bond_row, calculate_accrual
 from cache_store import CACHE
@@ -102,6 +103,9 @@ def dashboard():
         adjusted_current_prices[asset] = current_price_local
         equity_total_value += current_value_pln
         equity_profit_total += profit_loss_pln
+
+    for row in dashboard_rows:
+        row["logo_url"] = get_logo_url(row["asset"])
 
     cur.execute("SELECT amount FROM cash_deposits ORDER BY created_at DESC LIMIT 1")
     cash_row = cur.fetchone()

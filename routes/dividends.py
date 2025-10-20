@@ -10,36 +10,13 @@ from db import get_db
 from cache_store import CACHE
 from helpers import get_current_prices
 from services.twelvedata import fetch_dividends as td_fetch_dividends
+from symbol_utils import build_twelvedata_candidates
 
 dividends_bp = Blueprint("dividends", __name__, url_prefix="/dividends")
 DIVIDEND_TTL = 12 * 60 * 60  # 12 hours
 TAX_RATE = 0.19
 
 LOGGER = logging.getLogger(__name__)
-
-SYMBOL_TWELVE_MAP = {
-    "NWG.L": ["NWG", "NWG:LSE", "LON:NWG"],
-    "PKN.WA": ["PKN", "PKN:WSE", "WSE:PKN"],
-    "PZU.WA": ["PZU", "PZU:WSE", "WSE:PZU"],
-}
-
-def get_symbol_mappings(asset: str, provider: str) -> list[str]:
-    if not asset:
-        return []
-
-    normalized_asset = asset.strip().upper()
-    db = get_db()
-    cur = db.cursor()
-    cur.execute(
-        """
-        SELECT provider_symbol
-        FROM symbol_mappings
-        WHERE internal_symbol = ? AND provider = ? AND active = 1
-        ORDER BY priority ASC, id ASC
-        """,
-        (normalized_asset, provider),
-    )
-    return [row[0] for row in cur.fetchall()]
 
 def get_portfolio_assets():
     db = get_db()
@@ -76,73 +53,7 @@ def parse_twelve_dividends(asset: str, data: dict):
         })
     return results
 
-    return results
 
-def _twelvedata_candidates(asset: str):
-    candidates = []
-    if not asset:
-        return candidates
-
-    asset_norm = asset.strip().upper()
-    seen = set()
-
-    def add(symbol: str):
-        sym = (symbol or "").strip()
-        if not sym or sym in seen:
-            return
-        seen.add(sym)
-        candidates.append(sym)
-
-    add(asset_norm)
-    overrides = SYMBOL_TWELVE_MAP.get(asset_norm, [])
-    for entry in overrides:
-        add(entry)
-
-    if "." in asset_norm:
-        root = asset_norm.split(".", 1)[0]
-        add(root)
-    else:
-        root = asset_norm
-
-    if asset_norm.endswith(".L"):
-        add(f"{root}:LSE")
-        add(f"LON:{root}")
-    if asset_norm.endswith(".WA"):
-        add(f"{root}:WSE")
-        add(f"WSE:{root}")
-    if asset_norm.endswith(".F"):
-        add(f"{root}:FRA")
-    if asset_norm.endswith(".DE"):
-        add(f"{root}:ETR")
-    if asset_norm.endswith(".MI"):
-        add(f"{root}:MIL")
-    if asset_norm.endswith(".PA"):
-        add(f"{root}:PAR")
-
-    return candidates
-
-def get_twelvedata_candidates(asset: str) -> list[str]:
-    mapped = get_symbol_mappings(asset, 'twelvedata')
-    seen: set[str] = set()
-    ordered: list[str] = []
-
-    for symbol in mapped:
-        sym = (symbol or '').strip()
-        if not sym or sym in seen:
-            continue
-        seen.add(sym)
-        ordered.append(sym)
-
-    for symbol in _twelvedata_candidates(asset):
-        if symbol in seen:
-            continue
-        seen.add(symbol)
-        ordered.append(symbol)
-
-    if not ordered and asset:
-        ordered.append(asset.strip().upper())
-
-    return ordered
 
 def _parse_date(value):
     if not value:
@@ -240,7 +151,7 @@ def _sync_dividend_shares(dividends):
 def fetch_dividends_for_asset(asset: str):
     records: list[dict] = []
 
-    td_candidates = get_twelvedata_candidates(asset)
+    td_candidates = build_twelvedata_candidates(asset)
     LOGGER.debug("Twelve Data candidates for %s: %s", asset, td_candidates)
     td_errors = []
     for symbol in td_candidates:

@@ -137,7 +137,14 @@
         <tbody>
           {% for row in dashboard_rows %}
           <tr>
-            <td class="fw-semibold">{{ row.asset }}</td>
+            <td class="fw-semibold">
+              <div class="d-flex align-items-center gap-2">
+                {% if row.logo_url %}
+                <img src="{{ row.logo_url }}" alt="{{ row.asset }} logo" class="rounded-circle" style="width:24px;height:24px;object-fit:contain;">
+                {% endif %}
+                <span>{{ row.asset }}</span>
+              </div>
+            </td>
             <td><span class="pill-badge">{{ row.category }}</span></td>
             <td>{{ row.currency }}</td>
             <td class="text-end">{{ "%.2f"|format(row.quantity) }}</td>

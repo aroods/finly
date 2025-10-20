@@ -11,6 +11,67 @@
 
     <div class="card mb-4">
       <div class="card-body">
+        <h2 class="h6 text-uppercase text-muted" style="letter-spacing:.16em;">Search Twelve Data</h2>
+        <form method="POST" class="row g-3 mt-2">
+          <input type="hidden" name="action" value="search">
+          <div class="col-md-4">
+            <label for="internal_symbol_search" class="form-label">Internal symbol</label>
+            <input type="text" class="form-control" id="internal_symbol_search" name="internal_symbol_search" value="{{ search_context.internal_symbol }}" placeholder="e.g. PZU.WA">
+          </div>
+          <div class="col-md-5">
+            <label for="query" class="form-label">Query *</label>
+            <input type="text" class="form-control" id="query" name="query" value="{{ search_context.query }}" placeholder="Ticker or name" required>
+          </div>
+          <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+          </div>
+        </form>
+        {% if search_results %}
+        <div class="table-responsive mt-3">
+          <table class="table align-middle table-sm">
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Name</th>
+                <th>Exchange</th>
+                <th>Country</th>
+                <th class="text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in search_results %}
+              <tr>
+                <td class="fw-semibold">{{ item.symbol }}</td>
+                <td>{{ item.instrument_name or '-' }}</td>
+                <td>{{ item.exchange or '-' }}</td>
+                <td>{{ item.country or '-' }}</td>
+                <td class="text-end">
+                  {% if search_context.internal_symbol %}
+                  <form method="POST" action="{{ url_for('settings.mappings') }}" class="d-inline">
+                    <input type="hidden" name="action" value="add">
+                    <input type="hidden" name="internal_symbol" value="{{ search_context.internal_symbol }}">
+                    <input type="hidden" name="provider" value="twelvedata">
+                    <input type="hidden" name="provider_symbol" value="{{ item.symbol }}">
+                    <input type="hidden" name="priority" value="0">
+                    <button type="submit" class="btn btn-sm btn-outline-success">Add</button>
+                  </form>
+                  {% else %}
+                  <span class="text-muted small">Podaj symbol docelowy, aby dodać alias.</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% elif search_context.query %}
+        <p class="text-muted mt-3 mb-0">Brak wyników.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-body">
         <h2 class="h6 text-uppercase text-muted" style="letter-spacing:.16em;">Add Alias</h2>
         <form method="POST" class="row g-3 mt-2">
           <input type="hidden" name="action" value="add">
@@ -28,7 +89,7 @@
           </div>
           <div class="col-md-3">
             <label for="provider_symbol" class="form-label">Provider symbol *</label>
-            <input type="text" class="form-control" id="provider_symbol" name="provider_symbol" placeholder="e.g. PZU.WAR" required>
+            <input type="text" class="form-control" id="provider_symbol" name="provider_symbol" placeholder="e.g. PZU:WSE" required>
           </div>
           <div class="col-md-2">
             <label for="priority" class="form-label">Priority</label>
