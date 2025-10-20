@@ -67,6 +67,24 @@ def init_db():
     )
     ''')
 
+    # Dividends table
+    cur.execute('''
+    CREATE TABLE IF NOT EXISTS dividends (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        asset TEXT NOT NULL,
+        ex_date TEXT,
+        pay_date TEXT,
+        amount REAL NOT NULL,
+        currency TEXT NOT NULL DEFAULT 'USD',
+        shares REAL DEFAULT 0,
+        gross_value REAL DEFAULT 0,
+        net_value REAL DEFAULT 0,
+        source TEXT,
+        notes TEXT,
+        UNIQUE(asset, ex_date, source)
+    )
+    ''')
+
     # Add any other tables (snapshots, etc.) here
     db.commit()
     db.close()

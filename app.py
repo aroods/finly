@@ -11,6 +11,7 @@ from routes.cash import cash_bp
 from routes.api import api_bp
 from routes.about import about_bp
 from routes.bonds import bonds_bp
+from routes.dividends import dividends_bp
 from db import close_db
 
 app = Flask(__name__)
@@ -40,6 +41,7 @@ app.register_blueprint(cash_bp, url_prefix='/cash')
 app.register_blueprint(api_bp, url_prefix='/api')
 app.register_blueprint(about_bp, url_prefix='/about')
 app.register_blueprint(bonds_bp, url_prefix='/bonds')
+app.register_blueprint(dividends_bp, url_prefix='/dividends')
 
 # Close DB connections after each request
 app.teardown_appcontext(close_db)
