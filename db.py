@@ -81,8 +81,37 @@ def init_db():
         net_value REAL DEFAULT 0,
         source TEXT,
         notes TEXT,
+        status TEXT NOT NULL DEFAULT 'synced',
         UNIQUE(asset, ex_date, source)
     )
+    ''')
+
+    # Symbol mappings table
+    cur.execute('''
+    CREATE TABLE IF NOT EXISTS symbol_mappings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        internal_symbol TEXT NOT NULL,
+        provider TEXT NOT NULL,
+        provider_symbol TEXT NOT NULL,
+        priority INTEGER DEFAULT 0,
+        active INTEGER NOT NULL DEFAULT 1,
+        notes TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT,
+        UNIQUE(internal_symbol, provider, provider_symbol)
+    )
+    ''')
+
+    # Ensure dividends.status column exists
+    cur.execute("PRAGMA table_info(dividends)")
+    dividend_columns = {row[1] for row in cur.fetchall()}
+    if "status" not in dividend_columns:
+        cur.execute("ALTER TABLE dividends ADD COLUMN status TEXT NOT NULL DEFAULT 'synced'")
+
+    # Indexes for faster lookups
+    cur.execute('''
+    CREATE INDEX IF NOT EXISTS idx_symbol_mappings_lookup
+    ON symbol_mappings (internal_symbol, provider, active, priority)
     ''')
 
     # Add any other tables (snapshots, etc.) here
