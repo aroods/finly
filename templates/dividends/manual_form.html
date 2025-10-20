@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8 col-xl-6">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h1 class="h4 fw-semibold mb-3">Add Manual Dividend</h1>
+        <p class="text-muted small mb-4">
+          Use this form to record a payout that is missing from API sources. Net per share is calculated with the default tax rate of {{ (tax_rate * 100)|round(0) }}%.
+        </p>
+        <form method="POST" action="{{ url_for('dividends.add_manual_dividend') }}">
+          <div class="mb-3">
+            <label for="asset" class="form-label">Asset *</label>
+            <input type="text" class="form-control" id="asset" name="asset" value="{{ form.asset }}" required>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="ex_date" class="form-label">Ex Dividend Date *</label>
+              <input type="date" class="form-control" id="ex_date" name="ex_date" value="{{ form.ex_date }}" required>
+            </div>
+            <div class="col-md-6">
+              <label for="pay_date" class="form-label">Pay Date</label>
+              <input type="date" class="form-control" id="pay_date" name="pay_date" value="{{ form.pay_date }}">
+            </div>
+          </div>
+          <div class="row g-3 mt-0 mt-md-3">
+            <div class="col-md-6">
+              <label for="amount" class="form-label">Gross Amount / Share *</label>
+              <input type="number" step="0.0001" min="0" class="form-control" id="amount" name="amount" value="{{ form.amount }}" required>
+            </div>
+            <div class="col-md-6">
+              <label for="currency" class="form-label">Currency</label>
+              <input type="text" class="form-control" id="currency" name="currency" value="{{ form.currency or 'USD' }}" maxlength="6">
+            </div>
+          </div>
+          <div class="mb-3 mt-3">
+            <label for="shares" class="form-label">Shares at ex-date</label>
+            <input type="number" step="0.0001" min="0" class="form-control" id="shares" name="shares" value="{{ form.shares }}">
+            <div class="form-text">Leave empty to auto-calculate from transaction history.</div>
+          </div>
+          <div class="mb-3">
+            <label for="notes" class="form-label">Notes</label>
+            <textarea class="form-control" id="notes" name="notes" rows="3">{{ form.notes }}</textarea>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <a class="btn btn-secondary" href="{{ url_for('dividends.list_dividends') }}">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Dividend</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

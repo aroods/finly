@@ -5,10 +5,25 @@
     <h1 class="h3 fw-semibold mb-1">Dividend Tracker</h1>
     <p class="text-muted mb-0">Upcoming cash flows and historical payouts across your holdings.</p>
   </div>
-  <form method="POST" action="{{ url_for('dividends.list_dividends') }}">
-    <button type="submit" class="btn btn-outline-primary">Refresh Now</button>
-  </form>
+  <div class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2">
+    <a class="btn btn-primary" href="{{ url_for('dividends.add_manual_dividend') }}">Add Manual Dividend</a>
+    <form method="POST" action="{{ url_for('dividends.list_dividends') }}">
+      <button type="submit" class="btn btn-outline-primary">Refresh Now</button>
+    </form>
+  </div>
+{% if missing_assets %}
+<div class="alert alert-warning">
+  <div class="fw-semibold mb-1">Brak danych z API dla poniższych aktywów:</div>
+  <ul class="mb-0">
+    {% for asset in missing_assets %}
+    <li>
+      {{ asset }}
+      <span class="ms-2"><a href="{{ url_for('dividends.add_manual_dividend', asset=asset) }}">Dodaj dywidendę ręcznie</a></span>
+    </li>
+    {% endfor %}
+  </ul>
 </div>
+{% endif %}
 
 <div class="row g-3 mb-4">
   <div class="col-md-6">
@@ -47,6 +62,7 @@
             <th class="text-end">Yield</th>
             <th class="text-end">Shares</th>
             <th class="text-end">Expected Net</th>
+            <th>Status</th>
             <th>Source</th>
           </tr>
         </thead>
@@ -61,6 +77,7 @@
             <td class="text-end">{% if d.yield_pct %}{{ "%.2f"|format(d.yield_pct) }}%{% else %}-{% endif %}</td>
             <td class="text-end">{% if d.shares %}{{ d.shares }}{% else %}-{% endif %}</td>
             <td class="text-end">{% if d.total_net %}{{ "%.2f"|format(d.total_net) }} {{ d.currency }}{% else %}-{% endif %}</td>
+            <td><span class="badge bg-{% if d.status == 'manual' %}info{% elif d.status == 'synced' %}success{% else %}secondary{% endif %}">{{ d.status|capitalize }}</span></td>
             <td class="text-muted small">{{ d.source }}</td>
           </tr>
           {% endfor %}
@@ -86,6 +103,7 @@
             <th class="text-end">Yield</th>
             <th class="text-end">Shares</th>
             <th class="text-end">Net Cash</th>
+            <th>Status</th>
             <th>Source</th>
           </tr>
         </thead>
@@ -100,11 +118,12 @@
             <td class="text-end">{% if d.yield_pct %}{{ "%.2f"|format(d.yield_pct) }}%{% else %}-{% endif %}</td>
             <td class="text-end">{% if d.shares %}{{ d.shares }}{% else %}-{% endif %}</td>
             <td class="text-end">{% if d.total_net %}{{ "%.2f"|format(d.total_net) }} {{ d.currency }}{% else %}-{% endif %}</td>
+            <td><span class="badge bg-{% if d.status == 'manual' %}info{% elif d.status == 'synced' %}success{% else %}secondary{% endif %}">{{ d.status|capitalize }}</span></td>
             <td class="text-muted small">{{ d.source }}</td>
           </tr>
           {% else %}
           <tr>
-            <td colspan="9" class="text-center text-muted py-4">No dividend records yet.</td>
+            <td colspan="10" class="text-center text-muted py-4">No dividend records yet.</td>
           </tr>
           {% endfor %}
         </tbody>

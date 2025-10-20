@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-xl-10">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+      <div>
+        <h1 class="h4 fw-semibold mb-1">Symbol Mappings</h1>
+        <p class="text-muted mb-0">Define provider-specific aliases used when fetching dividends.</p>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h6 text-uppercase text-muted" style="letter-spacing:.16em;">Add Alias</h2>
+        <form method="POST" class="row g-3 mt-2">
+          <input type="hidden" name="action" value="add">
+          <div class="col-md-3">
+            <label for="internal_symbol" class="form-label">Internal symbol *</label>
+            <input type="text" class="form-control" id="internal_symbol" name="internal_symbol" placeholder="e.g. PZU.WA" required>
+          </div>
+          <div class="col-md-2">
+            <label for="provider" class="form-label">Provider *</label>
+            <select class="form-select" id="provider" name="provider" required>
+              {% for provider in providers %}
+              <option value="{{ provider }}">{{ provider }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label for="provider_symbol" class="form-label">Provider symbol *</label>
+            <input type="text" class="form-control" id="provider_symbol" name="provider_symbol" placeholder="e.g. PZU.WAR" required>
+          </div>
+          <div class="col-md-2">
+            <label for="priority" class="form-label">Priority</label>
+            <input type="number" class="form-control" id="priority" name="priority" value="0">
+          </div>
+          <div class="col-12">
+            <label for="notes" class="form-label">Notes</label>
+            <textarea class="form-control" id="notes" name="notes" rows="2" placeholder="Optional description"></textarea>
+          </div>
+          <div class="col-12 d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary">Save Alias</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h6 text-uppercase text-muted" style="letter-spacing:.16em;">Existing Aliases</h2>
+        <div class="table-responsive mt-3">
+          <table class="table align-middle table-striped">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Symbol</th>
+                <th>Provider</th>
+                <th>Alias</th>
+                <th class="text-center">Priority</th>
+                <th class="text-center">Active</th>
+                <th>Notes</th>
+                <th>Updated</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for mapping in mappings %}
+              <tr>
+                <td>{{ mapping.id }}</td>
+                <td class="fw-semibold">{{ mapping.internal_symbol }}</td>
+                <td>{{ mapping.provider }}</td>
+                <td>{{ mapping.provider_symbol }}</td>
+                <td class="text-center">{{ mapping.priority }}</td>
+                <td class="text-center">
+                  <span class="badge bg-{{ 'success' if mapping.active else 'secondary' }}">{{ 'Yes' if mapping.active else 'No' }}</span>
+                </td>
+                <td>{{ mapping.notes or '-' }}</td>
+                <td class="small text-muted">{{ mapping.updated_at or mapping.created_at }}</td>
+                <td class="text-end">
+                  <div class="d-flex justify-content-end gap-2">
+                    <form method="POST" action="{{ url_for('settings.mappings') }}">
+                      <input type="hidden" name="action" value="toggle">
+                      <input type="hidden" name="mapping_id" value="{{ mapping.id }}">
+                      <button type="submit" class="btn btn-sm btn-outline-secondary">{{ 'Disable' if mapping.active else 'Enable' }}</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('settings.mappings') }}" onsubmit="return confirm('Delete this alias?');">
+                      <input type="hidden" name="action" value="delete">
+                      <input type="hidden" name="mapping_id" value="{{ mapping.id }}">
+                      <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="9" class="text-center text-muted py-4">No mappings yet.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

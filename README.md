@@ -20,6 +20,10 @@ Track your stocks, ETFs, bonds, crypto, and cash deposits, with powerful dashboa
   Manage stocks, ETFs, bonds, crypto, and cash—add and edit any transaction.
 - 🌍 **Automatic FX and Price Updates**  
   Pulls the latest prices and currency rates automatically (with caching to avoid API limits).
+- 💵 **Dividend Intelligence**  
+  Fetches upcoming payouts and history from Twelve Data + EOD, normalizes net/gross values, and surfaces them in a dedicated view.
+- 🪙 **Bond Ledger**  
+  Track Polish retail bonds (or add your own), with accrued interest calculations, dashboards, and amortization helpers.
 - 📝 **Full Transaction and Cash History**  
   See every trade, deposit, and cash change—edit, audit, and analyze with ease.
 - 📅 **Upcoming Events**  
@@ -59,7 +63,15 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 3. **Run locally**
+### 3. **Configure environment**
+
+Copy the sample `.env` and fill in your API keys (see [🔑 Environment & API Keys](#-environment--api-keys)):
+
+```bash
+cp .env.example .env
+```
+
+### 4. **Run locally**
 
 ```bash
 python app.py
@@ -85,9 +97,34 @@ docker run -d --name finly -p 5000:5000 \
 
 ## ⚙️ Configuration
 
-- **Environment Variables:**
-  - `SECRET_KEY` — Set in `.env` for extra security.
+- **Environment Variables:** defined in `.env`
+  - `SECRET_KEY` — Session protection (optional but recommended).
+  - `TWELVE_DATA_API_KEY` — Required for dividend data.
+  - `EOD_API_KEY` — Required for dividend fallback and fundamentals.
 - **Logo:** Place your custom logo in `static/logo.png` (shown in navbar and About).
+- **Docker refresh:** use `./refresh_docker.sh` to rebuild the container with updated code and automatically pass through `.env`.
+
+---
+
+## 📦 Modules
+
+- **Dashboard & Analytics** — consolidated performance tiles, allocation drill-down, and profit timeline.
+- **Transactions / Equities** — CRUD for equity trades, position summaries, and FX-normalized returns.
+- **Bonds** — add Polish treasury bonds with dynamic coupon indexing and auto-accrual.
+- **Dividends** — upcoming & historical payouts with net/gross, yield, and caching-aware refresh actions.
+- **Cash** — deposits and withdrawals with balance tracking.
+
+---
+
+## 🔑 Environment & API Keys
+
+| Service        | Variable               | Notes & Limits |
+|----------------|------------------------|----------------|
+| Twelve Data    | `TWELVE_DATA_API_KEY`  | Free tier: 8 requests/min, 800/day. Used for dividend feed. Cache TTL 12h to stay within limits. |
+| EOD Historical | `EOD_API_KEY`          | Free tier: 20 requests/day (trial) / paid for more. Used as fallback + fundamentals. Cache TTL 12-24h. |
+
+- For local runs, set keys directly in `.env`. Docker users can rely on `docker run --env-file .env` via `refresh_docker.sh`.
+- Clear cached data from the dashboard ⚙ menu when troubleshooting stale quotes or dividends.
 
 ---
 
