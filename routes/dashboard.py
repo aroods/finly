@@ -119,7 +119,8 @@ def dashboard():
     bond_total_accrued = 0.0
     for bond in bond_positions:
         accrual = calculate_accrual(bond)
-        bond_rows.append((bond, accrual))
+        bond_logo = get_logo_url(bond.series)
+        bond_rows.append((bond, accrual, bond_logo))
         bond_total_value += accrual["current_value"]
         bond_total_accrued += accrual["accrued_interest"]
 

@@ -42,7 +42,7 @@
               {% for item in search_results %}
               <tr>
                 <td class="fw-semibold">{{ item.symbol }}</td>
-                <td>{{ item.instrument_name or '-' }}</td>
+                <td>{{ item.instrument_name or item.name or '-' }}</td>
                 <td>{{ item.exchange or '-' }}</td>
                 <td>{{ item.country or '-' }}</td>
                 <td class="text-end">

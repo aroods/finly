@@ -39,6 +39,8 @@ EVENT_TTL = 24 * 60 * 60 # 24 hours
 FX_TTL = 60 * 60         # 1 hour
 HISTORY_TTL = 12 * 60 * 60  # 12 hours
 LOGO_TTL = 7 * 24 * 60 * 60  # 7 days
+AVATAR_BACKGROUND = "0D8ABC"
+AVATAR_COLOR = "fff"
 
 
 def _get_price_history(symbol, start_date, end_date):
@@ -267,6 +269,19 @@ def get_current_prices(symbols):
 
 
 
+
+def _avatar_placeholder(asset: str) -> str:
+    identifier = (asset or "").strip()
+    if not identifier:
+        return f"https://ui-avatars.com/api/?name=?&background={AVATAR_BACKGROUND}&color={AVATAR_COLOR}&size=64&bold=true"
+    parts = identifier.replace("_", " ").split()
+    initials = "".join(part[0] for part in parts if part)
+    initials = (initials or identifier[:2]).upper()
+    return (
+        "https://ui-avatars.com/api/"
+        f"?name={initials}&background={AVATAR_BACKGROUND}&color={AVATAR_COLOR}&size=64&bold=true"
+    )
+
 def get_logo_url(asset: str) -> str:
     """Return cached Twelve Data logo URL for the asset if available."""
     if not asset:
@@ -291,8 +306,9 @@ def get_logo_url(asset: str) -> str:
             CACHE.set(cache_key, logo_url)
             return logo_url
 
-    CACHE.set(cache_key, "")
-    return ""
+    placeholder = _avatar_placeholder(asset)
+    CACHE.set(cache_key, placeholder)
+    return placeholder
 
 
 
@@ -462,3 +478,51 @@ def build_profit_timeseries(transactions, asset_fx_rates=None, current_price_map
         day += timedelta(days=1)
 
     return profit_series
+
+
+
+def format_number(value, decimals=2):
+    try:
+        amount = float(value)
+    except (TypeError, ValueError):
+        return "-"
+    pattern = f"{{:,.{decimals}f}}"
+    return pattern.format(amount).replace(",", " ")
+
+
+def format_currency(value, currency="PLN", decimals=2):
+    try:
+        amount = float(value)
+    except (TypeError, ValueError):
+        return "-"
+    formatted = format_number(amount, decimals)
+    return f"{formatted} {currency}".strip()
+
+
+def format_signed_currency(value, currency="PLN", decimals=2):
+    try:
+        amount = float(value)
+    except (TypeError, ValueError):
+        return "-"
+    sign = ""
+    if amount > 0:
+        sign = "+"
+    elif amount < 0:
+        sign = "-"
+    formatted = format_number(abs(amount), decimals)
+    return f"{sign}{formatted} {currency}".strip()
+
+
+def format_percentage(value, decimals=2, include_sign=True):
+    try:
+        amount = float(value)
+    except (TypeError, ValueError):
+        return "-"
+    sign = ""
+    if include_sign:
+        if amount > 0:
+            sign = "+"
+        elif amount < 0:
+            sign = "-"
+    formatted = format_number(abs(amount), decimals)
+    return f"{sign}{formatted}%"

@@ -15,7 +15,7 @@
     <div class="card">
       <div class="card-body">
         <p class="text-muted text-uppercase mb-1" style="font-size:.7rem; letter-spacing:.16em;">Upcoming net cash (est.)</p>
-        <h3 class="fw-semibold text-highlight mb-0">{{ "%.2f"|format(total_net_upcoming) }} PLN</h3>
+        <h3 class="fw-semibold text-highlight mb-0">{{ total_net_upcoming|format_currency() }}</h3>
         <span class="text-muted small">Assuming declared payouts and {{ (tax_rate * 100)|round(0) }}% withholding tax.</span>
       </div>
     </div>
@@ -24,7 +24,7 @@
     <div class="card">
       <div class="card-body">
         <p class="text-muted text-uppercase mb-1" style="font-size:.7rem; letter-spacing:.16em;">Net dividends (last 12 months)</p>
-        <h3 class="fw-semibold text-highlight mb-0">{{ "%.2f"|format(total_net_12m) }} PLN</h3>
+        <h3 class="fw-semibold text-highlight mb-0">{{ total_net_12m|format_currency() }}</h3>
         <span class="text-muted small">Recorded payouts after tax.</span>
       </div>
     </div>
@@ -57,11 +57,11 @@
             <td class="fw-semibold">{{ d.asset }}</td>
             <td>{{ d.ex_date or '-' }}</td>
             <td>{{ d.pay_date or '-' }}</td>
-            <td class="text-end">{{ "%.2f"|format(d.amount) }} {{ d.currency }}</td>
-            <td class="text-end">{{ "%.2f"|format(d.net_per_share) }} {{ d.currency }}</td>
-            <td class="text-end">{% if d.yield_pct %}{{ "%.2f"|format(d.yield_pct) }}%{% else %}-{% endif %}</td>
-            <td class="text-end">{% if d.shares %}{{ d.shares }}{% else %}-{% endif %}</td>
-            <td class="text-end">{% if d.total_net %}{{ "%.2f"|format(d.total_net) }} {{ d.currency }}{% else %}-{% endif %}</td>
+            <td class="text-end">{{ d.amount|format_currency(d.currency) }}</td>
+            <td class="text-end">{{ d.net_per_share|format_currency(d.currency) }}</td>
+            <td class="text-end">{% if d.yield_pct %}{{ d.yield_pct|format_percentage }}{% else %}-{% endif %}</td>
+            <td class="text-end">{% if d.shares %}{{ d.shares|format_number(4) if d.shares is not none else '-' }}{% else %}-{% endif %}</td>
+            <td class="text-end">{% if d.total_net %}{{ d.total_net|format_currency(d.currency) }}{% else %}-{% endif %}</td>
             <td><span class="badge bg-{% if d.status == 'manual' %}info{% elif d.status == 'synced' %}success{% else %}secondary{% endif %}">{{ d.status|capitalize }}</span></td>
             <td class="text-muted small">{{ d.source }}</td>
           </tr>
@@ -98,11 +98,11 @@
             <td class="fw-semibold">{{ d.asset }}</td>
             <td>{{ d.ex_date or '-' }}</td>
             <td>{{ d.pay_date or '-' }}</td>
-            <td class="text-end">{{ "%.2f"|format(d.amount) }} {{ d.currency }}</td>
-            <td class="text-end">{{ "%.2f"|format(d.net_per_share) }} {{ d.currency }}</td>
-            <td class="text-end">{% if d.yield_pct %}{{ "%.2f"|format(d.yield_pct) }}%{% else %}-{% endif %}</td>
-            <td class="text-end">{% if d.shares %}{{ d.shares }}{% else %}-{% endif %}</td>
-            <td class="text-end">{% if d.total_net %}{{ "%.2f"|format(d.total_net) }} {{ d.currency }}{% else %}-{% endif %}</td>
+            <td class="text-end">{{ d.amount|format_currency(d.currency) }}</td>
+            <td class="text-end">{{ d.net_per_share|format_currency(d.currency) }}</td>
+            <td class="text-end">{% if d.yield_pct %}{{ d.yield_pct|format_percentage }}{% else %}-{% endif %}</td>
+            <td class="text-end">{% if d.shares %}{{ d.shares|format_number(4) if d.shares is not none else '-' }}{% else %}-{% endif %}</td>
+            <td class="text-end">{% if d.total_net %}{{ d.total_net|format_currency(d.currency) }}{% else %}-{% endif %}</td>
             <td><span class="badge bg-{% if d.status == 'manual' %}info{% elif d.status == 'synced' %}success{% else %}secondary{% endif %}">{{ d.status|capitalize }}</span></td>
             <td class="text-muted small">{{ d.source }}</td>
           </tr>

@@ -73,7 +73,7 @@
       <div class="card-body">
         <p class="text-muted text-uppercase mb-1" style="font-size:.7rem; letter-spacing:.16em;">Bond Value</p>
         <h3 class="fw-semibold mb-2 text-highlight">{{ "%.2f"|format(bond_total_value) }} PLN</h3>
-        <span class="text-profit-positive small">Accrued: {{ "%.2f"|format(bond_total_accrued) }} PLN</span>
+        <span class="text-profit-positive small">Accrued: {{ bond_total_accrued|format_currency() }}</span>
       </div>
     </div>
   </div>
@@ -147,16 +147,16 @@
             </td>
             <td><span class="pill-badge">{{ row.category }}</span></td>
             <td>{{ row.currency }}</td>
-            <td class="text-end">{{ "%.2f"|format(row.quantity) }}</td>
-            <td class="text-end">{{ "%.2f"|format(row.weighted_avg_price_local) }} {{ row.currency }}</td>
-            <td class="text-end">{{ "%.2f"|format(row.investment_cost_pln) }}</td>
-            <td class="text-end">{{ "%.2f"|format(row.current_price_local) }} {{ row.currency }}</td>
-            <td class="text-end">{{ "%.2f"|format(row.current_value_pln) }}</td>
+            <td class="text-end">{{ row.quantity|format_number(4) }}</td>
+            <td class="text-end">{{ row.weighted_avg_price_local|format_currency(row.currency) }}</td>
+            <td class="text-end">{{ row.investment_cost_pln|format_currency() }}</td>
+            <td class="text-end">{{ row.current_price_local|format_currency(row.currency) }}</td>
+            <td class="text-end">{{ row.current_value_pln|format_currency() }}</td>
             <td class="text-end {% if row.profit_loss_pln >= 0 %}text-profit-positive{% else %}text-profit-negative{% endif %}">
-              {{ "%.2f"|format(row.profit_loss_pln) }}
+              {{ row.profit_loss_pln|format_signed_currency() }}
             </td>
             <td class="text-end {% if row.profit_loss_pln >= 0 %}text-profit-positive{% else %}text-profit-negative{% endif %}">
-              {{ "%.2f"|format(row.profit_loss_perc) }}%
+              {{ row.profit_loss_perc|format_percentage }}
             </td>
           </tr>
           {% endfor %}
@@ -184,15 +184,22 @@
           </tr>
         </thead>
         <tbody>
-          {% for bond, accrual in bond_rows %}
+          {% for bond, accrual, logo_url in bond_rows %}
           <tr>
-            <td class="fw-semibold">{{ bond.series }}</td>
+            <td>
+            <div class="d-flex align-items-center gap-2">
+              {% if logo_url %}
+              <img src="{{ logo_url }}" alt="{{ bond.series }} logo" class="rounded-circle" style="width:24px;height:24px;object-fit:contain;">
+              {% endif %}
+              <span class="fw-semibold">{{ bond.series }}</span>
+            </div>
+          </td>
             <td><span class="pill-badge">{{ bond.bond_type|title }}</span></td>
             <td>{{ bond.purchase_date.strftime('%Y-%m-%d') }}</td>
             <td>{{ bond.maturity_date.strftime('%Y-%m-%d') }}</td>
-            <td class="text-end">{{ "%.2f"|format(bond.principal) }}</td>
-            <td class="text-end text-profit-positive">{{ "%.2f"|format(accrual['accrued_interest']) }}</td>
-            <td class="text-end">{{ "%.2f"|format(accrual['current_value']) }}</td>
+            <td class="text-end">{{ bond.principal|format_currency() }}</td>
+            <td class="text-end {% if accrual['accrued_interest'] >= 0 %}text-profit-positive{% else %}text-profit-negative{% endif %}">{{ accrual['accrued_interest']|format_signed_currency() }}</td>
+            <td class="text-end">{{ accrual['current_value']|format_currency() }}</td>
           </tr>
           {% endfor %}
         </tbody>

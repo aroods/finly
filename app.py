@@ -4,7 +4,13 @@ from datetime import datetime
 
 from flask import Flask, redirect, url_for
 
-from helpers import euro_datetime
+from helpers import (
+    euro_datetime,
+    format_number,
+    format_currency,
+    format_signed_currency,
+    format_percentage,
+)
 from routes.dashboard import dashboard_bp
 from routes.transactions import transactions_bp
 from routes.cash import cash_bp
@@ -28,6 +34,10 @@ app.config['ASSET_VERSION'] = os.environ.get('ASSET_VERSION', '2')
 
 # Register Jinja custom filters
 app.jinja_env.filters['euro_datetime'] = euro_datetime
+app.jinja_env.filters['format_number'] = format_number
+app.jinja_env.filters['format_currency'] = format_currency
+app.jinja_env.filters['format_signed_currency'] = format_signed_currency
+app.jinja_env.filters['format_percentage'] = format_percentage
 
 
 @app.context_processor
