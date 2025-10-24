@@ -30,7 +30,7 @@ if not _secret:
         "SECRET_KEY environment variable not set; using a temporary key for this run."
     )
 app.config['SECRET_KEY'] = _secret
-app.config['ASSET_VERSION'] = os.environ.get('ASSET_VERSION', '2')
+app.config['ASSET_VERSION'] = os.environ.get('ASSET_VERSION', '3')
 
 # Register Jinja custom filters
 app.jinja_env.filters['euro_datetime'] = euro_datetime
