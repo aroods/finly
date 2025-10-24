@@ -7,23 +7,8 @@
   </div>
   <div class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2">
     <a class="btn btn-primary" href="{{ url_for('dividends.add_manual_dividend') }}">Add Manual Dividend</a>
-    <form method="POST" action="{{ url_for('dividends.list_dividends') }}">
-      <button type="submit" class="btn btn-outline-primary">Refresh Now</button>
-    </form>
   </div>
-{% if missing_assets %}
-<div class="alert alert-warning">
-  <div class="fw-semibold mb-1">Brak danych z API dla poniższych aktywów:</div>
-  <ul class="mb-0">
-    {% for asset in missing_assets %}
-    <li>
-      {{ asset }}
-      <span class="ms-2"><a href="{{ url_for('dividends.add_manual_dividend', asset=asset) }}">Dodaj dywidendę ręcznie</a></span>
-    </li>
-    {% endfor %}
-  </ul>
 </div>
-{% endif %}
 
 <div class="row g-3 mb-4">
   <div class="col-md-6">

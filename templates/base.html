@@ -25,17 +25,18 @@
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('dashboard.dashboard') }}">Dashboard</a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('transactions.all_transactions') }}">Equities</a>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="equityDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Equity Center</a>
+            <ul class="dropdown-menu" aria-labelledby="equityDropdown">
+              <li><a class="dropdown-item" href="{{ url_for('transactions.all_transactions') }}">Equity Holdings</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('dividends.list_dividends') }}">Dividends</a></li>
+            </ul>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('cash.cash_history') }}">Cash History</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('bonds.list_bonds') }}">Bonds</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('dividends.list_dividends') }}">Dividends</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('settings.mappings') }}">Settings</a>

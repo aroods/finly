@@ -316,21 +316,8 @@ def enrich_with_market_data(dividends):
         })
     return enriched
 
-@dividends_bp.route("/", methods=["GET", "POST"])
+@dividends_bp.route("/", methods=["GET"])
 def list_dividends():
-    if request.method == "POST":
-        result = refresh_dividends(force=True)
-        processed = result.get("processed", 0)
-        missing = result.get("missing", [])
-        if processed:
-            flash(f"Zaktualizowano dane dywidend ({processed} wpisów).", "success")
-        else:
-            flash("Brak nowych danych z API dla dywidend.", "warning")
-        if missing:
-            flash("Brak danych dla: " + ", ".join(missing), "warning")
-        return redirect(url_for("dividends.list_dividends"))
-
-    result = refresh_dividends(force=False) or {"processed": 0, "missing": []}
     dividends = enrich_with_market_data(load_dividends())
     today = date.today()
     upcoming = [d for d in dividends if d["upcoming"]]
@@ -346,8 +333,6 @@ def list_dividends():
         total_net_upcoming=total_net_upcoming,
         total_net_12m=total_net_12m,
         tax_rate=TAX_RATE,
-        missing_assets=result.get("missing", []),
-        refresh_result=result,
     )
 
 @dividends_bp.route("/manual", methods=["GET", "POST"])
