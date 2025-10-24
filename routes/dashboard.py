@@ -158,7 +158,7 @@ def dashboard():
     ]
     bond_detail_data = [
         {"label": bond.series, "value": round(accrual["current_value"], 2)}
-        for bond, accrual in bond_rows
+        for bond, accrual, _ in bond_rows
     ]
 
     EQUITY_COLORS = [
