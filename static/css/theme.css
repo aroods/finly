@@ -245,15 +245,12 @@ body {
 
 .table.table-striped tbody tr:nth-of-type(odd) > * {
     background-color: rgba(22, 30, 46, 0.82) !important;
-    color: var(--text-primary) !important;
 }
 
 .table.table-striped tbody tr:nth-of-type(even) > * {
     background-color: rgba(15, 23, 42, 0.7) !important;
-    color: var(--text-primary) !important;
 }
 
 .table.table-striped tbody tr:hover > * {
     background-color: rgba(56, 189, 248, 0.12) !important;
-    color: var(--text-primary) !important;
 }
